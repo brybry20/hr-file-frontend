@@ -1313,10 +1313,7 @@ export default function App() {
           
           {/* HR-FILE Icon */}
           <div className="hr-logo-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
-              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-            </svg>
+          
           </div>
           <span className="hr-logo-text">HR-FILE</span>
           <span className="hr-logo-badge">System</span>
