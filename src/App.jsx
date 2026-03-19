@@ -15,7 +15,7 @@ axios.defaults.baseURL = import.meta.env.PROD
 axios.defaults.withCredentials = true;
 
 /* ─────────────────────────────────────────
-   GLOBAL STYLES WITH NOTIFICATIONS
+   GLOBAL STYLES WITH LOGO AND NOTIFICATIONS
 ───────────────────────────────────────── */
 const GLOBAL_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -323,7 +323,7 @@ const GLOBAL_STYLES = `
     color: var(--text);
   }
 
-  /* ── HEADER ── */
+  /* ── HEADER WITH LOGO ── */
   .hr-header {
     position: sticky;
     top: 0;
@@ -343,7 +343,33 @@ const GLOBAL_STYLES = `
   .hr-header-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+  }
+
+  /* Logo image styles */
+  .hr-logo-image {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,169,110,0.3);
+    animation: logoGlow 3s ease-in-out infinite;
+  }
+
+  .hr-logo-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  @keyframes logoGlow {
+    0% { box-shadow: 0 0 0 0 rgba(200,169,110,0.3); }
+    50% { box-shadow: 0 0 20px 5px rgba(200,169,110,0.5); }
+    100% { box-shadow: 0 0 0 0 rgba(200,169,110,0.3); }
   }
 
   .hr-logo-icon {
@@ -1087,7 +1113,7 @@ const DETAIL_TAB = {
 };
 
 /* ─────────────────────────────────────────
-   APP COMPONENT WITH NOTIFICATIONS
+   APP COMPONENT WITH LOGO AND NOTIFICATIONS
 ───────────────────────────────────────── */
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -1277,9 +1303,15 @@ export default function App() {
       <div className="hr-orb hr-orb-2" />
       <div className="hr-orb hr-orb-3" />
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER WITH LOGO ── */}
       <header className="hr-header">
         <div className="hr-header-left">
+          {/* DeltaPlus Logo */}
+          <div className="hr-logo-image">
+            <img src="/deltaplus2.png" alt="DeltaPlus Logo" />
+          </div>
+          
+          {/* HR-FILE Icon */}
           <div className="hr-logo-icon">
             <svg viewBox="0 0 24 24">
               <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
