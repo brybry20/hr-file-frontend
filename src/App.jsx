@@ -9,7 +9,10 @@ import CarsInventory from './components/CarsInventory';
 import Birthdays from './components/Birthdays';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:3001';
+axios.defaults.baseURL = import.meta.env.PROD 
+  ? 'https://hr-file-backend.onrender.com'  // i-check na tama ang URL
+  : 'http://localhost:3001';
+axios.defaults.withCredentials = true;
 axios.defaults.withCredentials = true;
 
 /* ─────────────────────────────────────────
