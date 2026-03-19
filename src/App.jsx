@@ -1312,9 +1312,7 @@ export default function App() {
           </div>
           
           {/* HR-FILE Icon */}
-          <div className="hr-logo-icon">
-          
-          </div>
+
           <span className="hr-logo-text">HR-FILE</span>
           <span className="hr-logo-badge">System</span>
         </div>
