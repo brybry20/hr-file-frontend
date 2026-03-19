@@ -650,7 +650,7 @@ export default function Login({ onLogin }) {
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [particles, setParticles] = useState([]);
 
-  const logoPath = '/src/assets/deltaplus2.png';
+  const logoPath = '/deltaplus2.png';  // direkta sa public folder
 
   useEffect(() => {
     // Preload logo
