@@ -791,7 +791,7 @@ export default function Login({ onLogin }) {
 
 
             <div className="hr-left-footer">
-              © 2026 HR-FILE Systems<br />All rights reserved.
+              © DeltaPlus 2026 HR-FILE Systems<br />All rights reserved.
             </div>
           </div>
 
