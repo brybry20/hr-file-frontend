@@ -526,10 +526,10 @@ export default function App() {
         {activeTab === 'birthdays' && <Birthdays         onNotify={showNotification} />}
       </main>
 
-      {/* SEARCH MODAL */}
+      {/* ── SEARCH MODAL - SIMPLE AT TAMA NA ── */}
       {showSearch && (
         <div className="hr-overlay" onClick={() => setShowSearch(false)}>
-          <div className="hr-modal" style={{ maxWidth:960 }} onClick={e => e.stopPropagation()}>
+          <div className="hr-modal" style={{ maxWidth: 800 }} onClick={e => e.stopPropagation()}>
             <div className="hr-modal-head">
               <div className="hr-modal-title">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8">
@@ -539,27 +539,59 @@ export default function App() {
               </div>
               <button className="hr-modal-close" onClick={() => setShowSearch(false)}>×</button>
             </div>
+            
             <div className="hr-modal-body">
-              <div style={{ display:'flex', gap:'10px', marginBottom:'24px', alignItems:'stretch' }}>
-                <div style={{ flex:1, position:'relative', minWidth:0 }}>
-                  <svg viewBox="0 0 24 24" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', width:16, height:16, stroke:'#9a96a0', fill:'none', strokeWidth:1.5, pointerEvents:'none' }}>
-                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                  </svg>
-                  <input
-                    ref={searchInputRef} type="text"
-                    placeholder="Search anything — name, position, serial number, plate, account…"
-                    value={searchTerm} onChange={e => handleSearchInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                    style={{ display:'block', width:'100%', boxSizing:'border-box', background:'#1c1f28', border:'1px solid rgba(255,255,255,0.15)', borderRadius:10, padding:'13px 16px 13px 42px', fontFamily:'DM Sans, sans-serif', fontSize:14, color:'#e8e4dc', outline:'none', minHeight:48, caretColor:'#c8a96e' }}
-                  />
-                </div>
-                <button onClick={handleSearch} disabled={isSearching}
-                  style={{ flexShrink:0, padding:'0 28px', minHeight:48, background:'#c8a96e', color:'#0b0d12', border:'none', borderRadius:10, fontFamily:'DM Sans, sans-serif', fontSize:14, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', opacity:isSearching?0.6:1 }}>
-                  {isSearching ? 'Searching…' : 'Search'}
+              {/* SIMPLE SEARCH - no fancy styles */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search anything..."
+                  value={searchTerm}
+                  onChange={e => handleSearchInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    background: '#1c1f28',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '8px',
+                    color: '#e8e4dc',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#c8a96e',
+                    color: '#0b0d12',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    minWidth: '100px'
+                  }}
+                >
+                  {isSearching ? '...' : 'Search'}
                 </button>
               </div>
-              {isSearching && <div className="hr-spinner-wrap"><div className="hr-spinner" /><span className="hr-spinner-text">Searching all records…</span></div>}
-              {hasSearched && !isSearching && <div className="hr-results-pill"><strong>{totalResults()}</strong>{totalResults()===1?'result':'results'} for "{searchTerm}"</div>}
+
+              {isSearching && (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div className="hr-spinner" />
+                  <p style={{ marginTop: '16px', color: '#9a96a0' }}>Searching...</p>
+                </div>
+              )}
+
+              {hasSearched && !isSearching && (
+                <div className="hr-results-pill">
+                  <strong>{totalResults()}</strong> results for "{searchTerm}"
+                </div>
+              )}
+
               {!isSearching && SECTION_MAP.map(section => {
                 const items = searchResults[section.key];
                 if (!items || items.length === 0) return null;
@@ -567,32 +599,35 @@ export default function App() {
                   <div className="hr-section" key={section.key}>
                     <div className="hr-section-head">
                       <div className="hr-section-title">
-                        {section.icon} {section.label}
-                        <span className="hr-section-badge">{items.length}</span>
-                        <span className="hr-section-line" style={{ background:section.color }} />
+                        {section.icon} {section.label} ({items.length})
                       </div>
                       <button className="hr-goto-btn" onClick={() => goToTab(section.tab)}>
-                        Go to {section.label}
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        Go to {section.label} →
                       </button>
                     </div>
                     <div className="hr-cards-grid">
                       {items.map((item, idx) => {
                         const card = section.renderCard(item);
-                        const typeKey = section.key==='bankAccounts'?'bank':section.key==='phones'?'phone':section.key==='cars'?'car':section.key==='birthdays'?'birthday':section.key==='resigned'?'resigned':section.key==='hardware'?'hardware':'employee';
+                        const typeKey = section.key === 'bankAccounts' ? 'bank'
+                          : section.key === 'phones' ? 'phone'
+                          : section.key === 'cars' ? 'car'
+                          : section.key === 'birthdays' ? 'birthday'
+                          : section.key === 'resigned' ? 'resigned'
+                          : section.key === 'hardware' ? 'hardware'
+                          : 'employee';
                         return (
-                          <div key={item.id??idx} className="hr-result-card" style={{ '--card-accent':section.color }} onClick={() => openDetail(item, typeKey)}>
+                          <div
+                            key={item.id ?? idx}
+                            className="hr-result-card"
+                            onClick={() => openDetail(item, typeKey)}
+                          >
                             <div className="hr-card-name">{card.name}</div>
                             {card.fields.map(f => (
                               <div className="hr-card-field" key={f.label}>
-                                <span className="hr-card-label" style={{ color:section.color }}>{f.label}:</span>
-                                <span>{f.val||'—'}</span>
+                                <span className="hr-card-label">{f.label}:</span>
+                                <span>{f.val || '—'}</span>
                               </div>
                             ))}
-                            <div className="hr-card-hint">
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-                              Click to view all details
-                            </div>
                           </div>
                         );
                       })}
@@ -600,18 +635,17 @@ export default function App() {
                   </div>
                 );
               })}
-              {hasSearched && !isSearching && totalResults()===0 && (
+
+              {hasSearched && !isSearching && totalResults() === 0 && (
                 <div className="hr-empty">
                   <div className="hr-empty-icon">🔍</div>
                   <div className="hr-empty-title">No results for "{searchTerm}"</div>
-                  <div className="hr-empty-sub">Try a different keyword or check the spelling</div>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-
       {/* DETAIL MODAL */}
       {showDetail && selectedItem && (
         <div className="hr-overlay" onClick={() => setShowDetail(false)}>
