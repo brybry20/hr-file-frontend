@@ -157,35 +157,62 @@ const GLOBAL_STYLES = `
   }
   .hr-header-left { display:flex; align-items:center; gap:12px; }
 
-  /* ── Logo image box — frosted glass, light feel ── */
+  /* ── Logo image box — frosted glass + white glow behind ── */
   .hr-logo-image {
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.13) 0%,
-      rgba(255,255,255,0.06) 50%,
-      rgba(200,169,110,0.08) 100%
+      160deg,
+      rgba(255,255,255,0.22) 0%,
+      rgba(255,255,255,0.12) 40%,
+      rgba(255,255,255,0.07) 100%
     );
-    border: 1px solid rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.28);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.2),
-      0 2px 12px rgba(0,0,0,0.3);
-    backdrop-filter: blur(6px);
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -1px 0 rgba(255,255,255,0.08),
+      0 2px 16px rgba(0,0,0,0.25);
+    backdrop-filter: blur(10px);
     animation: logoGlow 3s ease-in-out infinite;
+  }
+
+  /* White radial glow behind the logo icon */
+  .hr-logo-image::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    background: radial-gradient(ellipse at center,
+      rgba(255,255,255,0.5) 0%,
+      rgba(255,255,255,0.15) 45%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    filter: blur(8px);
+    animation: logoWhiteGlow 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
   }
 
   .hr-logo-image img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* natural colors + pulsing gold glow matching logoPulse in Login */
+    position: relative;
+    z-index: 1;
     animation: logoImgPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes logoWhiteGlow {
+    0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.2); }
   }
 
   @keyframes logoImgPulse {
@@ -201,9 +228,9 @@ const GLOBAL_STYLES = `
   }
 
   @keyframes logoGlow {
-    0%  { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(200,169,110,0.3), 0 2px 12px rgba(0,0,0,0.3); }
-    50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 18px 4px rgba(200,169,110,0.45), 0 2px 12px rgba(0,0,0,0.3); }
-    100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(200,169,110,0.3), 0 2px 12px rgba(0,0,0,0.3); }
+    0%  { box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 0 rgba(255,255,255,0.2), 0 2px 16px rgba(0,0,0,0.25); }
+    50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 0 16px 4px rgba(255,255,255,0.18), 0 2px 16px rgba(0,0,0,0.25); }
+    100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 0 rgba(255,255,255,0.2), 0 2px 16px rgba(0,0,0,0.25); }
   }
 
   .hr-logo-text  { font-family:'DM Serif Display',serif; font-size:22px; color:var(--text); letter-spacing:-0.5px; }

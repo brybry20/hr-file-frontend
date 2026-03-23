@@ -364,36 +364,51 @@ const styles = `
   /* BIG LOGO CONTAINER */
   .hr-big-logo-container {
     margin: 20px 0 30px;
-    padding: 24px 20px;
+    padding: 28px 24px;
     background: linear-gradient(
-      135deg,
-      rgba(255,255,255,0.11) 0%,
-      rgba(255,255,255,0.05) 50%,
-      rgba(200,169,110,0.07) 100%
+      160deg,
+      rgba(255,255,255,0.22) 0%,
+      rgba(255,255,255,0.12) 40%,
+      rgba(255,255,255,0.07) 100%
     );
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.28);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.18),
-      0 4px 24px rgba(0,0,0,0.22);
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -1px 0 rgba(255,255,255,0.08),
+      0 4px 32px rgba(0,0,0,0.18);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     z-index: 2;
     overflow: hidden;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
   }
 
+  /* White radial glow behind the logo */
   .hr-big-logo-container::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,220,120,0.07), transparent 65%);
-    animation: rotateSlow 20s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 160px;
+    height: 100px;
+    background: radial-gradient(ellipse at center,
+      rgba(255,255,255,0.55) 0%,
+      rgba(255,255,255,0.18) 40%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    filter: blur(12px);
+    animation: whiteGlow 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes whiteGlow {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
   }
 
   /* ── Logo: full natural colors + floating glow ── */
