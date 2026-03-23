@@ -156,18 +156,56 @@ const GLOBAL_STYLES = `
     box-shadow:0 4px 20px rgba(0,0,0,0.3);
   }
   .hr-header-left { display:flex; align-items:center; gap:12px; }
+
+  /* ── Logo image box — frosted glass, light feel ── */
   .hr-logo-image {
-    width:42px; height:42px; border-radius:8px; overflow:hidden;
-    display:flex; align-items:center; justify-content:center;
-    background:var(--accent-dim); border:1px solid rgba(200,169,110,0.3);
-    animation:logoGlow 3s ease-in-out infinite;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.13) 0%,
+      rgba(255,255,255,0.06) 50%,
+      rgba(200,169,110,0.08) 100%
+    );
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      0 2px 12px rgba(0,0,0,0.3);
+    backdrop-filter: blur(6px);
+    animation: logoGlow 3s ease-in-out infinite;
   }
-  .hr-logo-image img { width:100%; height:100%; object-fit:contain; }
+
+  .hr-logo-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* natural colors + pulsing gold glow matching logoPulse in Login */
+    animation: logoImgPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes logoImgPulse {
+    0%, 100% {
+      filter: brightness(1.1) saturate(1.2)
+              drop-shadow(0 0 5px rgba(255,200,50,0.45));
+    }
+    50% {
+      filter: brightness(1.28) saturate(1.4)
+              drop-shadow(0 0 12px rgba(255,200,50,0.8))
+              drop-shadow(0 0 28px rgba(255,200,50,0.3));
+    }
+  }
+
   @keyframes logoGlow {
-    0%  { box-shadow:0 0 0 0 rgba(200,169,110,0.3); }
-    50% { box-shadow:0 0 20px 5px rgba(200,169,110,0.5); }
-    100%{ box-shadow:0 0 0 0 rgba(200,169,110,0.3); }
+    0%  { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(200,169,110,0.3), 0 2px 12px rgba(0,0,0,0.3); }
+    50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 18px 4px rgba(200,169,110,0.45), 0 2px 12px rgba(0,0,0,0.3); }
+    100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(200,169,110,0.3), 0 2px 12px rgba(0,0,0,0.3); }
   }
+
   .hr-logo-text  { font-family:'DM Serif Display',serif; font-size:22px; color:var(--text); letter-spacing:-0.5px; }
   .hr-logo-badge { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent); background:var(--accent-dim); border:1px solid rgba(200,169,110,0.2); padding:3px 10px; border-radius:20px; }
   .hr-header-right { display:flex; align-items:center; gap:12px; }
@@ -366,7 +404,6 @@ export default function App() {
   const searchInputRef                        = useRef(null);
   const searchDebounceRef                     = useRef(null);
 
-  // ── Central notification handler — passed as onNotify to all child components ──
   const showNotification = (type, message, duration = 3000) => {
     if (notificationTimer.current) clearTimeout(notificationTimer.current);
     setNotification({ type, message });
@@ -479,7 +516,9 @@ export default function App() {
 
       <header className="hr-header">
         <div className="hr-header-left">
-          <div className="hr-logo-image"><img src="/deltaplus2.png" alt="DeltaPlus Logo" /></div>
+          <div className="hr-logo-image">
+            <img src="/deltaplus.png" alt="DeltaPlus Logo" />
+          </div>
           <span className="hr-logo-text">HR-FILE</span>
           <span className="hr-logo-badge">System</span>
         </div>
@@ -526,7 +565,7 @@ export default function App() {
         {activeTab === 'birthdays' && <Birthdays         onNotify={showNotification} />}
       </main>
 
-      {/* ── SEARCH MODAL - SIMPLE AT TAMA NA ── */}
+      {/* ── SEARCH MODAL ── */}
       {showSearch && (
         <div className="hr-overlay" onClick={() => setShowSearch(false)}>
           <div className="hr-modal" style={{ maxWidth: 800 }} onClick={e => e.stopPropagation()}>
@@ -541,7 +580,6 @@ export default function App() {
             </div>
             
             <div className="hr-modal-body">
-              {/* SIMPLE SEARCH - no fancy styles */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
                 <input
                   ref={searchInputRef}
@@ -646,6 +684,7 @@ export default function App() {
           </div>
         </div>
       )}
+
       {/* DETAIL MODAL */}
       {showDetail && selectedItem && (
         <div className="hr-overlay" onClick={() => setShowDetail(false)}>
@@ -675,7 +714,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ── SINGLE NOTIFICATION SYSTEM for the entire app ── */}
+      {/* ── NOTIFICATION ── */}
       {notification && (
         <div className={`hr-notification ${notification.type}`} onClick={() => setNotification(null)}>
           <div className="hr-notification-icon">

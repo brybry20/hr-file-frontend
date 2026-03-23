@@ -361,19 +361,28 @@ const styles = `
     100% { text-shadow: 0 0 5px rgba(200,169,110,0.3); }
   }
 
-  /* BIG LOGO CONTAINER - NO ANIMATION */
+  /* BIG LOGO CONTAINER */
   .hr-big-logo-container {
     margin: 20px 0 30px;
-    padding: 20px;
-    background: rgba(0,0,0,0.2);
+    padding: 24px 20px;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.11) 0%,
+      rgba(255,255,255,0.05) 50%,
+      rgba(200,169,110,0.07) 100%
+    );
     border-radius: 16px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      0 4px 24px rgba(0,0,0,0.22);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     z-index: 2;
     overflow: hidden;
+    backdrop-filter: blur(8px);
   }
 
   .hr-big-logo-container::before {
@@ -383,17 +392,32 @@ const styles = `
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(200,169,110,0.2), transparent 70%);
+    background: radial-gradient(circle, rgba(255,220,120,0.07), transparent 65%);
     animation: rotateSlow 20s linear infinite;
   }
 
+  /* ── Logo: full natural colors + floating glow ── */
   .hr-big-logo {
     max-width: 180px;
     max-height: 120px;
     object-fit: contain;
     position: relative;
     z-index: 3;
-    filter: drop-shadow(0 0 10px rgba(200,169,110,0.5));
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes logoPulse {
+    0%, 100% {
+      filter: brightness(1.1) saturate(1.2)
+              drop-shadow(0 0 8px rgba(255, 200, 50, 0.5))
+              drop-shadow(0 0 20px rgba(255, 200, 50, 0.2));
+    }
+    50% {
+      filter: brightness(1.3) saturate(1.4)
+              drop-shadow(0 0 18px rgba(255, 200, 50, 0.85))
+              drop-shadow(0 0 40px rgba(255, 200, 50, 0.4))
+              drop-shadow(0 0 60px rgba(50, 100, 200, 0.2));
+    }
   }
 
   .hr-info { 
@@ -650,15 +674,13 @@ export default function Login({ onLogin }) {
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [particles, setParticles] = useState([]);
 
-  const logoPath = '/deltaplus2.png';  // direkta sa public folder
+  const logoPath = '/deltaplus.png';
 
   useEffect(() => {
-    // Preload logo
     const img = new Image();
     img.src = logoPath;
     img.onload = () => setLogoLoaded(true);
 
-    // Create particles
     const newParticles = [];
     for (let i = 0; i < 30; i++) {
       newParticles.push({
@@ -777,18 +799,16 @@ export default function Login({ onLogin }) {
               <div className="hr-brand-sub">Ceniza, Evangeline Gonzalvo</div>
             </div>
 
-            {/* BIG LOGO HERE - NO ANIMATION */}
+            {/* LOGO — natural colors, pulsing glow */}
             {logoLoaded && (
               <div className="hr-big-logo-container">
-                <img 
-                  src={logoPath} 
-                  alt="DeltaPlus Logo" 
+                <img
+                  src={logoPath}
+                  alt="DeltaPlus Logo"
                   className="hr-big-logo"
                 />
               </div>
             )}
-
-
 
             <div className="hr-left-footer">
               © DeltaPlus 2026 HR-FILE Systems<br />All rights reserved.

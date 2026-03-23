@@ -121,24 +121,90 @@ const STYLES = `
 
   /* Table */
   .ed-table-container {
-    background: #161920; border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    background: #161920;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     animation: edSlideUp 0.5s ease 0.3s both;
   }
   @keyframes edSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
 
-  .ed-table { width:100%; border-collapse:collapse; min-width:1200px; }
-  .ed-table thead tr { background:#1c1f28; border-bottom:1px solid rgba(255,255,255,0.07); }
+  /* Horizontal scroll wrapper */
+  .ed-table-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(110,181,200,0.35) rgba(255,255,255,0.04);
+  }
+  .ed-table-scroll::-webkit-scrollbar { height: 6px; }
+  .ed-table-scroll::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.04);
+    border-radius: 0 0 16px 16px;
+  }
+  .ed-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(110,181,200,0.35);
+    border-radius: 3px;
+  }
+  .ed-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(110,181,200,0.6);
+  }
+
+  .ed-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1300px;
+  }
+  .ed-table thead tr { background: #1c1f28; border-bottom: 1px solid rgba(255,255,255,0.07); }
   .ed-table th {
-    padding:16px 20px; font-size:11px; font-weight:700; letter-spacing:1.5px;
-    text-transform:uppercase; color:#5a5a6a; text-align:left;
+    padding: 16px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #5a5a6a;
+    text-align: left;
+    background: #1c1f28;
+    position: sticky; top: 0; z-index: 2;
   }
   .ed-table tbody tr {
-    border-bottom:1px solid rgba(255,255,255,0.04); transition:all 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.2s;
   }
-  .ed-table tbody tr:last-child { border-bottom:none; }
-  .ed-table tbody tr:hover { background:rgba(110,181,200,0.05); }
-  .ed-table td { padding:16px 20px; font-size:14px; color:#e8e4dc; vertical-align:middle; }
+  .ed-table tbody tr:last-child { border-bottom: none; }
+  .ed-table tbody tr:hover { background: rgba(110,181,200,0.05); }
+  .ed-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #e8e4dc;
+    vertical-align: middle;
+  }
+
+  /* ── Sticky Actions column ── */
+  .ed-table th.ed-col-actions,
+  .ed-table td.ed-col-actions {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+    background: #161920;
+  }
+  .ed-table th.ed-col-actions {
+    background: #1c1f28;
+    z-index: 4;
+  }
+  /* Fade shadow on the left edge of the sticky column */
+  .ed-table th.ed-col-actions::before,
+  .ed-table td.ed-col-actions::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -18px; bottom: 0;
+    width: 18px;
+    background: linear-gradient(to right, transparent, rgba(22,25,32,0.85));
+    pointer-events: none;
+  }
+  .ed-table tbody tr:hover td.ed-col-actions {
+    background: #1f2230;
+  }
 
   .ed-name-cell { display:flex; align-items:center; gap:14px; }
   .ed-avatar {
@@ -163,7 +229,7 @@ const STYLES = `
   .ed-muted { color:#5a5a6a; font-size:13px; }
   .ed-salary { color:#c8a96e; font-weight:600; font-size:13px; }
 
-  .ed-actions { display:flex; gap:6px; align-items:center; }
+  .ed-actions { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
   .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete {
     display:flex; align-items:center; justify-content:center; gap:5px;
     padding:8px 12px; border-radius:8px;
@@ -415,6 +481,27 @@ const STYLES = `
     font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s;
   }
   .ed-confirm-no:hover { border-color:rgba(255,255,255,0.15); color:#e8e4dc; background:rgba(255,255,255,0.04); transform:translateY(-2px); }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .ed-table-container {
+      margin: 0 -12px;
+      border-radius: 12px;
+    }
+    .ed-table {
+      min-width: 1100px;
+    }
+    .ed-table th, .ed-table td {
+      padding: 12px 12px;
+    }
+    .ed-actions {
+      gap: 4px;
+    }
+    .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+  }
 `;
 
 const getInitials = (name = '') =>
@@ -583,97 +670,100 @@ export default function EmployeeDirectory({ onNotify }) {
         )}
 
         <div className="ed-table-container">
-          <table className="ed-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Status</th>
-                <th>Date Started</th>
-                <th>Salary</th>
-                <th>SSS</th>
-                <th>PhilHealth</th>
-                <th>Pag-IBIG</th>
-                <th>TIN</th>
-                <th>CP / Viber</th>
-                <th>Email</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((emp, i) => (
-                <tr key={emp.id} style={{ animationDelay: `${i * 30}ms` }}>
-                  <td>
-                    <div className="ed-name-cell">
-                      <div className="ed-avatar">{getInitials(emp.name)}</div>
-                      <span className="ed-name-text">{safeDisplay(emp.name)}</span>
-                    </div>
-                  </td>
-                  <td><span style={{color:'#9a96a0'}}>{safeDisplay(emp.position)}</span></td>
-                  <td>
-                    <span className={`ed-status-chip ed-status-${emp.employment_status}`}>
-                      {safeDisplay(emp.employment_status)}
-                    </span>
-                  </td>
-                  <td><span className="ed-muted">{formatDate(emp.date_started)}</span></td>
-                  <td><span className="ed-salary">{formatCurrency(emp.salary)}</span></td>
-                  <td><span className="ed-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.sss)}</span></td>
-                  <td><span className="ed-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.philhealth)}</span></td>
-                  <td><span className="ed-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.pagibig)}</span></td>
-                  <td><span className="ed-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.tin)}</span></td>
-                  <td><span className="ed-muted">{safeDisplay(emp.cp_viber)}</span></td>
-                  <td><span style={{fontSize:13,color:'#9a96a0'}}>{safeDisplay(emp.official_email)}</span></td>
-                  <td>
-                    <div className="ed-actions">
-                      <button className="ed-btn-view" onClick={() => setViewEmployee(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View
-                      </button>
-                      <button className="ed-btn-edit" onClick={() => openEditModal(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        Edit
-                      </button>
-                      <button className="ed-btn-resign" onClick={() => openResignModal(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-                          <polyline points="16 17 21 12 16 7"/>
-                          <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                        Resign
-                      </button>
-                      <button className="ed-btn-delete" onClick={() => setDeleteTarget(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/>
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+          {/* Scroll wrapper inside so border-radius is preserved */}
+          <div className="ed-table-scroll">
+            <table className="ed-table">
+              <thead>
                 <tr>
-                  <td colSpan={12} style={{ padding: 0 }}>
-                    <div className="ed-empty">
-                      <div className="ed-empty-icon">👥</div>
-                      <div className="ed-empty-title">
-                        {search ? `No results for "${search}"` : 'No employees yet'}
-                      </div>
-                      <div className="ed-empty-sub">
-                        {search ? 'Try a different keyword' : 'Click "Add Employee" to get started'}
-                      </div>
-                    </div>
-                  </td>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                  <th>Date Started</th>
+                  <th>Salary</th>
+                  <th>SSS</th>
+                  <th>PhilHealth</th>
+                  <th>Pag-IBIG</th>
+                  <th>TIN</th>
+                  <th>CP / Viber</th>
+                  <th>Email</th>
+                  <th className="ed-col-actions">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.length > 0 ? filtered.map((emp, i) => (
+                  <tr key={emp.id} style={{ animationDelay: `${i * 30}ms` }}>
+                    <td>
+                      <div className="ed-name-cell">
+                        <div className="ed-avatar">{getInitials(emp.name)}</div>
+                        <span className="ed-name-text">{safeDisplay(emp.name)}</span>
+                      </div>
+                    </td>
+                    <td style={{ color: '#9a96a0' }}>{safeDisplay(emp.position)}</td>
+                    <td>
+                      <span className={`ed-status-chip ed-status-${emp.employment_status}`}>
+                        {safeDisplay(emp.employment_status)}
+                      </span>
+                    </td>
+                    <td><span className="ed-muted">{formatDate(emp.date_started)}</span></td>
+                    <td><span className="ed-salary">{formatCurrency(emp.salary)}</span></td>
+                    <td><span className="ed-muted" style={{ fontFamily: 'monospace', fontSize: 12 }}>{safeDisplay(emp.sss)}</span></td>
+                    <td><span className="ed-muted" style={{ fontFamily: 'monospace', fontSize: 12 }}>{safeDisplay(emp.philhealth)}</span></td>
+                    <td><span className="ed-muted" style={{ fontFamily: 'monospace', fontSize: 12 }}>{safeDisplay(emp.pagibig)}</span></td>
+                    <td><span className="ed-muted" style={{ fontFamily: 'monospace', fontSize: 12 }}>{safeDisplay(emp.tin)}</span></td>
+                    <td><span className="ed-muted">{safeDisplay(emp.cp_viber)}</span></td>
+                    <td style={{ fontSize: 13, color: '#9a96a0' }}>{safeDisplay(emp.official_email)}</td>
+                    <td className="ed-col-actions">
+                      <div className="ed-actions">
+                        <button className="ed-btn-view" onClick={() => setViewEmployee(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          View
+                        </button>
+                        <button className="ed-btn-edit" onClick={() => openEditModal(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Edit
+                        </button>
+                        <button className="ed-btn-resign" onClick={() => openResignModal(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                          </svg>
+                          Resign
+                        </button>
+                        <button className="ed-btn-delete" onClick={() => setDeleteTarget(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={12} style={{ padding: 0 }}>
+                      <div className="ed-empty">
+                        <div className="ed-empty-icon">👥</div>
+                        <div className="ed-empty-title">
+                          {search ? `No results for "${search}"` : 'No employees yet'}
+                        </div>
+                        <div className="ed-empty-sub">
+                          {search ? 'Try a different keyword' : 'Click "Add Employee" to get started'}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

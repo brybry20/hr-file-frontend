@@ -109,11 +109,62 @@ const STYLES = `
   }
   @keyframes rdSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
 
+  /* ── Horizontal scroll wrapper ── */
+  .rd-table-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(200,110,110,0.35) rgba(255,255,255,0.04);
+  }
+  .rd-table-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .rd-table-scroll::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.04);
+    border-radius: 0 0 16px 16px;
+  }
+  .rd-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(200,110,110,0.35);
+    border-radius: 3px;
+  }
+  .rd-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(200,110,110,0.6);
+  }
+
   .rd-table { width:100%; border-collapse:collapse; min-width:1100px; }
   .rd-table thead tr { background:#1c1f28; border-bottom:1px solid rgba(255,255,255,0.07); }
   .rd-table th {
     padding:16px 20px; font-size:11px; font-weight:700; letter-spacing:1.5px;
     text-transform:uppercase; color:#5a5a6a; text-align:left;
+    /* Sticky header */
+    position: sticky; top: 0; z-index: 2; background: #1c1f28;
+  }
+
+  /* Sticky Actions column */
+  .rd-table th.rd-col-actions,
+  .rd-table td.rd-col-actions {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+    background: #161920;
+  }
+  .rd-table th.rd-col-actions {
+    background: #1c1f28;
+    z-index: 4;
+  }
+  /* Subtle left border shadow to visually separate from scrolling content */
+  .rd-table th.rd-col-actions::before,
+  .rd-table td.rd-col-actions::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -18px; bottom: 0;
+    width: 18px;
+    background: linear-gradient(to right, transparent, rgba(22,25,32,0.85));
+    pointer-events: none;
+  }
+  .rd-table tbody tr:hover td.rd-col-actions {
+    background: #1f2230;
   }
   .rd-table tbody tr {
     border-bottom:1px solid rgba(255,255,255,0.04); transition:all 0.2s;
@@ -412,89 +463,93 @@ export default function ResignedDirectory({ onNotify }) {
           </div>
         )}
 
+        {/* ── Table container keeps the rounded border & shadow ── */}
         <div className="rd-table-container">
-          <table className="rd-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Status</th>
-                <th>Date Started</th>
-                <th>Salary</th>
-                <th>SSS</th>
-                <th>PhilHealth</th>
-                <th>Pag-IBIG</th>
-                <th>TIN</th>
-                <th>CP / Viber</th>
-                <th>Email</th>
-                <th>Resigned</th>
-                <th>Reason</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((emp, i) => (
-                <tr key={emp.id} style={{ animationDelay: `${i * 30}ms` }}>
-                  <td>
-                    <div className="rd-name-cell">
-                      <div className="rd-avatar">{getInitials(emp.name)}</div>
-                      <span className="rd-name-text">{safeDisplay(emp.name)}</span>
-                    </div>
-                  </td>
-                  <td><span style={{color:'#9a96a0'}}>{safeDisplay(emp.position)}</span></td>
-                  <td><span className="rd-resigned-badge">📋 {safeDisplay(emp.employment_status) || 'Resigned'}</span></td>
-                  <td><span className="rd-date-chip">{fmt(emp.date_started)}</span></td>
-                  <td><span className="rd-salary">₱{Number(emp.salary || 0).toLocaleString()}</span></td>
-                  <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.sss)}</span></td>
-                  <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.philhealth)}</span></td>
-                  <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.pagibig)}</span></td>
-                  <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.tin)}</span></td>
-                  <td><span className="rd-muted">{safeDisplay(emp.cp_viber)}</span></td>
-                  <td><span style={{fontSize:13,color:'#9a96a0'}}>{safeDisplay(emp.official_email)}</span></td>
-                  <td><span className="rd-date-chip resign">{fmt(emp.resignation_date)}</span></td>
-                  <td>
-                    {emp.reason ? (
-                      <span className="rd-reason-pill" title={emp.reason}>{emp.reason}</span>
-                    ) : (
-                      <span className="rd-muted">—</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="rd-actions">
-                      <button className="rd-btn-view" onClick={() => setViewEmp(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View
-                      </button>
-                      <button className="rd-btn-delete" onClick={() => setDeleteTarget(emp)}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                          <path d="M10 11v6M14 11v6"/>
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+          {/* ── Scroll wrapper inside, so border-radius is preserved ── */}
+          <div className="rd-table-scroll">
+            <table className="rd-table">
+              <thead>
                 <tr>
-                  <td colSpan={14} style={{ padding: 0 }}>
-                    <div className="rd-empty">
-                      <div className="rd-empty-icon">📋</div>
-                      <div className="rd-empty-title">
-                        {search ? `No results for "${search}"` : 'No resigned employees yet'}
-                      </div>
-                      <div className="rd-empty-sub">
-                        {search ? 'Try a different keyword' : 'Resigned employees will appear here'}
-                      </div>
-                    </div>
-                  </td>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                  <th>Date Started</th>
+                  <th>Salary</th>
+                  <th>SSS</th>
+                  <th>PhilHealth</th>
+                  <th>Pag-IBIG</th>
+                  <th>TIN</th>
+                  <th>CP / Viber</th>
+                  <th>Email</th>
+                  <th>Resigned</th>
+                  <th>Reason</th>
+                  <th className="rd-col-actions">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.length > 0 ? filtered.map((emp, i) => (
+                  <tr key={emp.id} style={{ animationDelay: `${i * 30}ms` }}>
+                    <td>
+                      <div className="rd-name-cell">
+                        <div className="rd-avatar">{getInitials(emp.name)}</div>
+                        <span className="rd-name-text">{safeDisplay(emp.name)}</span>
+                      </div>
+                    </td>
+                    <td><span style={{color:'#9a96a0'}}>{safeDisplay(emp.position)}</span></td>
+                    <td><span className="rd-resigned-badge">📋 {safeDisplay(emp.employment_status) || 'Resigned'}</span></td>
+                    <td><span className="rd-date-chip">{fmt(emp.date_started)}</span></td>
+                    <td><span className="rd-salary">₱{Number(emp.salary || 0).toLocaleString()}</span></td>
+                    <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.sss)}</span></td>
+                    <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.philhealth)}</span></td>
+                    <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.pagibig)}</span></td>
+                    <td><span className="rd-muted" style={{fontFamily:'monospace',fontSize:12}}>{safeDisplay(emp.tin)}</span></td>
+                    <td><span className="rd-muted">{safeDisplay(emp.cp_viber)}</span></td>
+                    <td><span style={{fontSize:13,color:'#9a96a0'}}>{safeDisplay(emp.official_email)}</span></td>
+                    <td><span className="rd-date-chip resign">{fmt(emp.resignation_date)}</span></td>
+                    <td>
+                      {emp.reason ? (
+                        <span className="rd-reason-pill" title={emp.reason}>{emp.reason}</span>
+                      ) : (
+                        <span className="rd-muted">—</span>
+                      )}
+                    </td>
+                    <td className="rd-col-actions">
+                      <div className="rd-actions">
+                        <button className="rd-btn-view" onClick={() => setViewEmp(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          View
+                        </button>
+                        <button className="rd-btn-delete" onClick={() => setDeleteTarget(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={14} style={{ padding: 0 }}>
+                      <div className="rd-empty">
+                        <div className="rd-empty-icon">📋</div>
+                        <div className="rd-empty-title">
+                          {search ? `No results for "${search}"` : 'No resigned employees yet'}
+                        </div>
+                        <div className="rd-empty-sub">
+                          {search ? 'Try a different keyword' : 'Resigned employees will appear here'}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
