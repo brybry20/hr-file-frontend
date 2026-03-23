@@ -833,7 +833,7 @@ export default function Login({ onLogin }) {
           {/* RIGHT PANEL */}
           <div className="hr-right">
             <div className="hr-form-header">
-              <div className="hr-form-title">Welcome <em>back.</em></div>
+              <div className="hr-form-title">Deltaplus</div>
               <div className="hr-form-subtitle">Sign in to access your HR dashboard</div>
             </div>
 
