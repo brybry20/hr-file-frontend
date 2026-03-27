@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { formatDate, safeString, formatCurrency } from '../utils/dateHelpers';
 import TableCell from '../components/TableCell';
+import EmployeeFiles from './EmployeeFiles';
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -230,7 +231,7 @@ const STYLES = `
   .ed-salary { color:#c8a96e; font-weight:600; font-size:13px; }
 
   .ed-actions { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
-  .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete {
+  .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete, .ed-btn-docs {
     display:flex; align-items:center; justify-content:center; gap:5px;
     padding:8px 12px; border-radius:8px;
     font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600;
@@ -244,6 +245,8 @@ const STYLES = `
   .ed-btn-resign:hover { background:rgba(237,137,54,0.2); border-color:rgba(237,137,54,0.4); transform:translateY(-2px); }
   .ed-btn-delete { background:rgba(224,90,90,0.1); border-color:rgba(224,90,90,0.2); color:#e05a5a; }
   .ed-btn-delete:hover { background:rgba(224,90,90,0.2); border-color:rgba(224,90,90,0.4); transform:translateY(-2px); }
+  .ed-btn-docs   { background:rgba(110,181,200,0.1); border-color:rgba(110,181,200,0.2); color:#6eb5c8; }
+  .ed-btn-docs:hover   { background:rgba(110,181,200,0.2); border-color:rgba(110,181,200,0.4); transform:translateY(-2px); }
 
   /* Empty State */
   .ed-empty {
@@ -390,7 +393,7 @@ const STYLES = `
   .ed-foot-save {
     padding: 12px 28px; background: #6eb5c8; color: #0b0d12; border: none; border-radius: 10px;
     font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
-    cursor: pointer; transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
   }
   .ed-foot-save::before {
     content: ''; position: absolute; inset: 0;
@@ -497,7 +500,7 @@ const STYLES = `
     .ed-actions {
       gap: 4px;
     }
-    .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete {
+    .ed-btn-view, .ed-btn-edit, .ed-btn-resign, .ed-btn-delete, .ed-btn-docs {
       padding: 5px 8px;
       font-size: 11px;
     }
@@ -531,14 +534,17 @@ export default function EmployeeDirectory({ onNotify }) {
   const [saving, setSaving]                     = useState(false);
   const [formData, setFormData]                 = useState(EMPTY_FORM);
   const [resignData, setResignData]             = useState({ resignation_date: '', reason: '' });
+  const [showFilesModal, setShowFilesModal]     = useState(false);
+  const [selectedEmployeeForFiles, setSelectedEmployeeForFiles] = useState(null);
 
   const notify = (type, msg) => { if (onNotify) onNotify(type, msg); };
 
+  // FIX: Added showFilesModal to dependency array so body scroll lock works correctly
   useEffect(() => {
-    const open = !!(viewEmployee || showModal || showResignModal || deleteTarget);
+    const open = !!(viewEmployee || showModal || showResignModal || showFilesModal || deleteTarget);
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [viewEmployee, showModal, showResignModal, deleteTarget]);
+  }, [viewEmployee, showModal, showResignModal, showFilesModal, deleteTarget]);
 
   useEffect(() => { fetchEmployees(); }, []);
 
@@ -574,6 +580,11 @@ export default function EmployeeDirectory({ onNotify }) {
     setResignData({ resignation_date: new Date().toISOString().split('T')[0], reason: '' });
     setViewEmployee(null);
     setShowResignModal(true);
+  };
+
+  const openFilesModal = (emp) => {
+    setSelectedEmployeeForFiles(emp);
+    setShowFilesModal(true);
   };
 
   const field = (k, v) => setFormData(p => ({ ...p, [k]: v }));
@@ -670,7 +681,6 @@ export default function EmployeeDirectory({ onNotify }) {
         )}
 
         <div className="ed-table-container">
-          {/* Scroll wrapper inside so border-radius is preserved */}
           <div className="ed-table-scroll">
             <table className="ed-table">
               <thead>
@@ -735,6 +745,17 @@ export default function EmployeeDirectory({ onNotify }) {
                           </svg>
                           Resign
                         </button>
+                        {/* FIX: Corrected icon — now uses a proper document/paperclip SVG */}
+                        <button className="ed-btn-docs" onClick={() => openFilesModal(emp)}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                          </svg>
+                          Docs
+                        </button>
                         <button className="ed-btn-delete" onClick={() => setDeleteTarget(emp)}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6"/>
@@ -767,7 +788,7 @@ export default function EmployeeDirectory({ onNotify }) {
         </div>
       </div>
 
-      {/* Modals Portal */}
+      {/* All Modals in Portal — FIX: Documents modal moved inside portal alongside all other modals */}
       {createPortal(
         <>
           {/* View Modal */}
@@ -1096,6 +1117,27 @@ export default function EmployeeDirectory({ onNotify }) {
                 <div className="ed-confirm-btns">
                   <button className="ed-confirm-no" onClick={() => setDeleteTarget(null)}>Cancel</button>
                   <button className="ed-confirm-del" onClick={confirmDelete}>Yes, Delete</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FIX: Documents modal moved INSIDE the portal — same level as all other modals */}
+          {showFilesModal && selectedEmployeeForFiles && (
+            <div className="ed-overlay" onClick={() => setShowFilesModal(false)}>
+              <div className="ed-form-modal" style={{ maxWidth: '700px' }} onClick={e => e.stopPropagation()}>
+                <div className="ed-form-head">
+                  <div className="ed-form-title">
+                    📎 {selectedEmployeeForFiles.name} — Documents
+                  </div>
+                  <button className="ed-card-close" onClick={() => setShowFilesModal(false)}>×</button>
+                </div>
+                <div style={{ padding: '20px' }}>
+                  <EmployeeFiles
+                    employeeId={selectedEmployeeForFiles.id}
+                    employeeName={selectedEmployeeForFiles.name}
+                    onNotify={notify}
+                  />
                 </div>
               </div>
             </div>
