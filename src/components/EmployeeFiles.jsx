@@ -1,73 +1,69 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 
-/* ─── virtual folder persistence ─── */
-const storageKey = (id) => `ef_folders_${id}`;
-const loadFolders = (id) => { try { const r = localStorage.getItem(storageKey(id)); return r ? JSON.parse(r) : []; } catch { return []; } };
-const saveFolders = (id, f) => { try { localStorage.setItem(storageKey(id), JSON.stringify(f)); } catch {} };
-const uid = () => `f_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+axios.defaults.withCredentials = true;
 
 /* ─── file type helpers ─── */
-const isImg  = (t, u) => t?.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(u || '');
-const isPdf  = (t, u) => t?.includes('pdf')   || /\.pdf$/i.test(u || '');
-const isDoc  = (t)    => t?.includes('word')  || t?.includes('document') || t?.includes('msword') || t?.includes('openxmlformats-officedocument.wordprocessingml');
-const isXls  = (t)    => t?.includes('sheet') || t?.includes('excel') || t?.includes('spreadsheetml') || t?.includes('ms-excel');
+const isImg = (t, u) => t?.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(u || '');
+const isPdf = (t, u) => t?.includes('pdf') || /\.pdf$/i.test(u || '');
+const isDoc = (t) => t?.includes('word') || t?.includes('document') || t?.includes('msword') || t?.includes('openxmlformats-officedocument.wordprocessingml');
+const isXls = (t) => t?.includes('sheet') || t?.includes('excel') || t?.includes('spreadsheetml') || t?.includes('ms-excel');
 
 const fileTypeLabel = (t) => {
   if (!t) return 'FILE';
-  if (t.includes('pdf'))   return 'PDF';
+  if (t.includes('pdf')) return 'PDF';
   if (t.includes('word') || t.includes('document')) return 'DOC';
-  if (t.includes('sheet') || t.includes('excel'))   return 'XLS';
+  if (t.includes('sheet') || t.includes('excel')) return 'XLS';
   if (t.includes('image')) return 'IMG';
   return 'FILE';
 };
 
 const fmtSize = (b) => {
   if (!b) return '—';
-  const s = ['B','KB','MB','GB'];
+  const s = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(b) / Math.log(1024));
   return `${(b / Math.pow(1024, i)).toFixed(1)} ${s[i]}`;
 };
 
 const fmtDate = (d) => {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+  return new Date(d).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-/* ─── SVG icons (no emojis) ─── */
+/* ─── SVG icons ─── */
 const Icon = ({ name, size = 16, color = 'currentColor' }) => {
   const icons = {
-    folder:    <><path d="M3 7a2 2 0 012-2h3.17a2 2 0 011.41.59l.83.82H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
-    file:      <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M14 2v6h6" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
-    pdf:       <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M7 12h4m-4 4h10M7 8h10" stroke={color} strokeWidth="1.5" strokeLinecap="round"/><text x="7" y="19" fontSize="5" fill={color} fontWeight="700">PDF</text></>,
-    doc:       <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M7 8h10M7 12h10M7 16h6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
-    xls:       <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M8 8l8 8M16 8l-8 8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
-    image:     <><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><circle cx="8.5" cy="8.5" r="1.5" fill={color}/><path d="M21 15l-5-5L5 21" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
-    upload:    <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    download:  <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    plus:      <><path d="M12 5v14M5 12h14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
-    pencil:    <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    trash:     <><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    move:      <><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    check:     <><path d="M20 6L9 17l-5-5" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></>,
-    close:     <><path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
-    external:  <><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    chevronR:  <><path d="M9 18l6-6-6-6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
-    home:      <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M9 22V12h6v10" fill="none" stroke={color} strokeWidth="1.5"/></>,
-    eye:       <><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" fill="none" stroke={color} strokeWidth="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke={color} strokeWidth="1.5"/></>,
+    folder: <><path d="M3 7a2 2 0 012-2h3.17a2 2 0 011.41.59l.83.82H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
+    file: <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M14 2v6h6" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
+    pdf: <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M7 12h4m-4 4h10M7 8h10" stroke={color} strokeWidth="1.5" strokeLinecap="round"/><text x="7" y="19" fontSize="5" fill={color} fontWeight="700">PDF</text></>,
+    doc: <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M7 8h10M7 12h10M7 16h6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
+    xls: <><rect x="3" y="2" width="18" height="20" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M8 8l8 8M16 8l-8 8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
+    image: <><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><circle cx="8.5" cy="8.5" r="1.5" fill={color}/><path d="M21 15l-5-5L5 21" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/></>,
+    upload: <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    download: <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    plus: <><path d="M12 5v14M5 12h14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
+    pencil: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    trash: <><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    move: <><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    check: <><path d="M20 6L9 17l-5-5" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></>,
+    close: <><path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
+    external: <><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    chevronR: <><path d="M9 18l6-6-6-6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    home: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M9 22V12h6v10" fill="none" stroke={color} strokeWidth="1.5"/></>,
+    eye: <><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" fill="none" stroke={color} strokeWidth="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke={color} strokeWidth="1.5"/></>,
     'zoom-in': (<><circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth="1.5"/><path d="M12 8v8M8 12h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
     'zoom-out': (<><circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth="1.5"/><path d="M8 12h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
     refresh: (<><path d="M20 12a8 8 0 11-8-8 8 8 0 018 8z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M12 8v4l3 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
   };
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink:0 }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
       {icons[name]}
     </svg>
   );
 };
 
 const FileTypeIcon = ({ fileType, size = 32 }) => {
-  const colors = { img:'#6eb5c8', pdf:'#e07a7a', doc:'#7ab4e0', xls:'#7ae0a0', file:'#9a96a0' };
+  const colors = { img: '#6eb5c8', pdf: '#e07a7a', doc: '#7ab4e0', xls: '#7ae0a0', file: '#9a96a0' };
   let name = 'file', color = colors.file;
   if (isImg(fileType)) { name = 'image'; color = colors.img; }
   else if (isPdf(fileType)) { name = 'pdf'; color = colors.pdf; }
@@ -76,25 +72,22 @@ const FileTypeIcon = ({ fileType, size = 32 }) => {
   return <Icon name={name} size={size} color={color} />;
 };
 
-/* ─── styles ─── */
+/* ─── styles (same as before) ─── */
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap');
 
-  .ef { font-family:'Syne',sans-serif; background:#13151c; border-radius:16px; color:#d4d0c8; }
+  .ef { font-family:'Syne',sans-serif; background:#13151c; border-radius:16px; color:#d4d0c8; padding:20px; }
 
-  /* ── header ── */
   .ef-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; }
   .ef-title { font-family:'DM Serif Display',serif; font-size:17px; color:#e8e4dc; display:flex; align-items:center; gap:10px; }
-  .ef-count { background:rgba(110,181,200,0.15); color:#6eb5c8; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; font-family:'Syne',sans-serif; }
+  .ef-count { background:rgba(110,181,200,0.15); color:#6eb5c8; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
 
-  /* ── breadcrumb ── */
   .ef-bc { display:flex; align-items:center; gap:4px; font-size:12px; margin-bottom:14px; flex-wrap:wrap; min-height:20px; }
   .ef-bc-btn { display:flex; align-items:center; gap:4px; color:#6eb5c8; cursor:pointer; background:none; border:none; font-family:'Syne',sans-serif; font-size:12px; padding:2px 6px; border-radius:6px; transition:background 0.15s; }
   .ef-bc-btn:hover { background:rgba(110,181,200,0.1); }
   .ef-bc-sep { color:#2e3040; }
   .ef-bc-cur { color:#6a6a7a; font-size:12px; padding:2px 4px; }
 
-  /* ── toolbar ── */
   .ef-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.05); }
   .ef-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:none; font-size:12px; font-family:'Syne',sans-serif; font-weight:600; cursor:pointer; transition:all 0.17s; white-space:nowrap; }
   .ef-btn:disabled { opacity:.4; cursor:not-allowed; }
@@ -109,30 +102,24 @@ const STYLES = `
   .ef-ready-badge { background:rgba(110,181,200,0.15); color:#6eb5c8; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
   .ef-sel-info { font-size:12px; color:#6eb5c8; margin-left:auto; }
 
-  /* ── grid ── */
   .ef-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:12px; max-height:520px; overflow-y:auto; padding:2px; }
   .ef-grid::-webkit-scrollbar { width:3px; }
   .ef-grid::-webkit-scrollbar-thumb { background:rgba(110,181,200,0.2); border-radius:3px; }
 
-  /* ── cards ── */
   .ef-card { background:#1a1d27; border:1.5px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden; cursor:pointer; transition:all 0.18s; position:relative; user-select:none; }
   .ef-card:hover { border-color:rgba(110,181,200,0.35); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
   .ef-card.sel { border-color:#6eb5c8; box-shadow:0 0 0 2px rgba(110,181,200,0.2); }
-  .ef-card.drag-over { border-color:#6eb5c8 !important; background:rgba(110,181,200,0.07) !important; box-shadow:0 0 0 3px rgba(110,181,200,0.25); }
+  .ef-card.drag-over { border-color:#6eb5c8 !important; background:rgba(110,181,200,0.07) !important; }
 
-  /* check */
-  .ef-chk { position:absolute; top:8px; left:8px; z-index:3; width:18px; height:18px; border-radius:5px; background:#6eb5c8; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
+  .ef-chk { position:absolute; top:8px; left:8px; z-index:3; width:18px; height:18px; border-radius:5px; background:#6eb5c8; display:flex; align-items:center; justify-content:center; }
 
-  /* folder thumb */
   .ef-fold-thumb { width:100%; height:100px; background:linear-gradient(140deg,#1d2133 0%,#161924 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
   .ef-fold-cnt { font-size:10px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 10px; border-radius:20px; font-family:'DM Mono',monospace; }
 
-  /* file thumb */
   .ef-file-thumb { width:100%; height:100px; background:#0f1117; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; overflow:hidden; position:relative; }
   .ef-file-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-  .ef-type-tag { font-size:9px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 8px; border-radius:20px; font-family:'DM Mono',monospace; font-weight:500; letter-spacing:.05em; }
+  .ef-type-tag { font-size:9px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 8px; border-radius:20px; font-family:'DM Mono',monospace; }
 
-  /* card body */
   .ef-card-body { padding:9px 10px; border-top:1px solid rgba(255,255,255,0.05); }
   .ef-card-name { font-size:11px; font-weight:600; color:#dedad2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
   .ef-card-meta { display:flex; justify-content:space-between; font-size:10px; color:#454555; font-family:'DM Mono',monospace; margin-bottom:8px; }
@@ -141,77 +128,65 @@ const STYLES = `
   .ef-act:hover { background:rgba(110,181,200,0.13); color:#6eb5c8; }
   .ef-act.danger:hover { background:rgba(224,90,90,0.13); color:#e07a7a; }
 
-  /* move dropdown */
   .ef-move-wrap { position:relative; flex:1; }
   .ef-move-drop { position:absolute; bottom:calc(100% + 6px); left:0; min-width:160px; background:#1a1d2b; border:1px solid rgba(110,181,200,0.18); border-radius:10px; padding:4px; z-index:300; box-shadow:0 12px 32px rgba(0,0,0,0.5); }
   .ef-move-opt { padding:6px 10px; font-size:11px; color:#9a96a0; border-radius:6px; cursor:pointer; transition:all 0.14s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px; }
   .ef-move-opt:hover { background:rgba(110,181,200,0.13); color:#6eb5c8; }
   .ef-move-opt.to-root { color:#e0b07a; }
-  .ef-move-opt.to-root:hover { background:rgba(224,176,122,0.13); color:#e0b07a; }
   .ef-move-opt.empty { color:#383848; cursor:default; }
 
-  /* drag hint */
   .ef-hint { font-size:11px; color:#2e3040; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
 
-  /* empty */
   .ef-empty { text-align:center; padding:52px 20px; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .ef-empty-icon { color:#252838; }
   .ef-empty-text { font-size:13px; color:#4a4a5a; }
   .ef-empty-sub { font-size:11px; color:#2e3040; }
 
-  /* loading */
   .ef-load { display:flex; justify-content:center; align-items:center; padding:56px; gap:10px; color:#4a4a5a; font-size:12px; }
   .ef-spin { width:22px; height:22px; border:2px solid rgba(255,255,255,0.06); border-top-color:#6eb5c8; border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
-  /* ── dialog ── */
   .ef-dlg-bg { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-  .ef-dlg { background:#1a1d27; border:1px solid rgba(110,181,200,0.16); border-radius:16px; padding:26px; width:340px; box-shadow:0 24px 60px rgba(0,0,0,0.6); }
+  .ef-dlg { background:#1a1d27; border:1px solid rgba(110,181,200,0.16); border-radius:16px; padding:26px; width:340px; }
   .ef-dlg-title { font-family:'DM Serif Display',serif; font-size:17px; color:#e8e4dc; margin-bottom:14px; }
-  .ef-dlg-inp { width:100%; background:#0f1117; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:9px 12px; color:#e8e4dc; font-size:13px; font-family:'Syne',sans-serif; outline:none; box-sizing:border-box; transition:border-color .17s; }
+  .ef-dlg-inp { width:100%; background:#0f1117; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:9px 12px; color:#e8e4dc; font-size:13px; font-family:'Syne',sans-serif; outline:none; box-sizing:border-box; }
   .ef-dlg-inp:focus { border-color:rgba(110,181,200,0.4); }
   .ef-dlg-acts { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
 
-  /* ── preview modal with zoom ── */
   .ef-pv-bg { position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
-  .ef-pv { display:flex; flex-direction:column; width:92vw; height:90vh; max-width:1100px; background:#13151c; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); box-shadow:0 32px 80px rgba(0,0,0,0.7); }
+  .ef-pv { display:flex; flex-direction:column; width:92vw; height:90vh; max-width:1100px; background:#13151c; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); }
 
-  /* top bar */
   .ef-pv-top { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#0f1117; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
   .ef-pv-icon { width:36px; height:36px; border-radius:8px; background:rgba(110,181,200,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .ef-pv-info { flex:1; min-width:0; }
   .ef-pv-name { font-size:13px; font-weight:600; color:#e8e4dc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .ef-pv-meta { font-size:10px; color:#4a4a5a; font-family:'DM Mono',monospace; margin-top:2px; }
   .ef-pv-zoom-controls { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:8px; }
-  .ef-pv-zoom-btn { width:28px; height:28px; border-radius:6px; background:rgba(110,181,200,0.1); border:1px solid rgba(110,181,200,0.2); color:#6eb5c8; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.17s; }
-  .ef-pv-zoom-btn:hover { background:rgba(110,181,200,0.2); transform:scale(1.05); }
+  .ef-pv-zoom-btn { width:28px; height:28px; border-radius:6px; background:rgba(110,181,200,0.1); border:1px solid rgba(110,181,200,0.2); color:#6eb5c8; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .ef-pv-zoom-btn:hover { background:rgba(110,181,200,0.2); }
   .ef-pv-zoom-level { font-size:11px; font-family:'DM Mono',monospace; color:#9a96a0; min-width:45px; text-align:center; }
   .ef-pv-acts { display:flex; gap:6px; flex-shrink:0; }
-  .ef-pv-close { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.05); border:none; color:#9a96a0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .17s; flex-shrink:0; }
+  .ef-pv-close { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.05); border:none; color:#9a96a0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .ef-pv-close:hover { background:rgba(224,90,90,0.2); color:#e07a7a; }
 
-  /* content area */
   .ef-pv-body { flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#0c0e14; position:relative; cursor:grab; }
   .ef-pv-body:active { cursor:grabbing; }
   .ef-pv-body img { max-width:100%; max-height:100%; object-fit:contain; transition:transform 0.2s ease; transform-origin:center; }
   .ef-pv-body iframe { width:100%; height:100%; border:none; }
 
-  /* no-preview card */
   .ef-pv-nopreview { display:flex; flex-direction:column; align-items:center; gap:16px; }
   .ef-pv-nopreview-icon { width:80px; height:80px; border-radius:20px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; }
   .ef-pv-nopreview h3 { font-family:'DM Serif Display',serif; font-size:18px; color:#e8e4dc; margin:0; }
   .ef-pv-nopreview p { font-size:12px; color:#4a4a5a; margin:0; }
 
-  /* bottom bar */
   .ef-pv-bot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; background:#0f1117; border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
   .ef-pv-path { font-size:10px; color:#383848; font-family:'DM Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
-  .ef-pv-dl-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:#6eb5c8; color:#0b0d12; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; transition:all .17s; }
+  .ef-pv-dl-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:#6eb5c8; color:#0b0d12; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; }
   .ef-pv-dl-btn:hover { background:#82c8db; transform:translateY(-1px); }
-  .ef-pv-open-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:rgba(110,181,200,0.1); border:1px solid rgba(110,181,200,0.2); color:#6eb5c8; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; transition:all .17s; }
+  .ef-pv-open-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:rgba(110,181,200,0.1); border:1px solid rgba(110,181,200,0.2); color:#6eb5c8; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; }
   .ef-pv-open-btn:hover { background:rgba(110,181,200,0.18); transform:translateY(-1px); }
 `;
 
-/* ─── Dialog ─── */
 function Dialog({ title, defaultValue = '', placeholder = '', onConfirm, onCancel }) {
   const [val, setVal] = useState(defaultValue);
   const ref = useRef();
@@ -234,7 +209,6 @@ function Dialog({ title, defaultValue = '', placeholder = '', onConfirm, onCance
   );
 }
 
-/* ─── Preview Modal with Zoom ─── */
 function Preview({ file, onClose }) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -248,51 +222,30 @@ function Preview({ file, onClose }) {
   const doc = isDoc(file.file_type);
   const xls = isXls(file.file_type);
 
-  // Build a forced-download URL via Cloudinary fl_attachment
   const dlUrl = file.cloudinary_url
     ? file.cloudinary_url.replace('/upload/', '/upload/fl_attachment/')
     : file.cloudinary_url;
 
-  // Handle zoom
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.25, 3));
-  };
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
+  const handleResetZoom = () => { setZoom(1); setPosition({ x: 0, y: 0 }); };
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.25, 0.5));
-  };
-
-  const handleResetZoom = () => {
-    setZoom(1);
-    setPosition({ x: 0, y: 0 });
-  };
-
-  // Handle drag for zoomed images
   const handleMouseDown = (e) => {
     if (zoom > 1 && img) {
       e.preventDefault();
       setIsDragging(true);
-      setDragStart({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
     }
   };
 
   const handleMouseMove = (e) => {
     if (isDragging && zoom > 1 && img) {
-      setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      });
+      setPosition({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
 
-  // Handle wheel zoom
   const handleWheel = (e) => {
     if (img) {
       e.preventDefault();
@@ -309,7 +262,6 @@ function Preview({ file, onClose }) {
     }
   }, [img]);
 
-  // Generate Google Docs viewer URL for Office documents
   const getOfficeViewerUrl = () => {
     if (doc || xls) {
       return `https://docs.google.com/gview?url=${encodeURIComponent(file.cloudinary_url)}&embedded=true`;
@@ -320,7 +272,6 @@ function Preview({ file, onClose }) {
   return (
     <div className="ef-pv-bg" onClick={onClose}>
       <div className="ef-pv" onClick={e => e.stopPropagation()}>
-        {/* TOP BAR */}
         <div className="ef-pv-top">
           <div className="ef-pv-icon">
             <FileTypeIcon fileType={file.file_type} size={20} />
@@ -331,56 +282,34 @@ function Preview({ file, onClose }) {
           </div>
           {img && (
             <div className="ef-pv-zoom-controls">
-              <button className="ef-pv-zoom-btn" onClick={handleZoomOut} title="Zoom Out">
-                <Icon name="zoom-out" size={16} />
-              </button>
+              <button className="ef-pv-zoom-btn" onClick={handleZoomOut}><Icon name="zoom-out" size={16} /></button>
               <span className="ef-pv-zoom-level">{Math.round(zoom * 100)}%</span>
-              <button className="ef-pv-zoom-btn" onClick={handleZoomIn} title="Zoom In">
-                <Icon name="zoom-in" size={16} />
-              </button>
-              <button className="ef-pv-zoom-btn" onClick={handleResetZoom} title="Reset Zoom">
-                <Icon name="refresh" size={14} />
-              </button>
+              <button className="ef-pv-zoom-btn" onClick={handleZoomIn}><Icon name="zoom-in" size={16} /></button>
+              <button className="ef-pv-zoom-btn" onClick={handleResetZoom}><Icon name="refresh" size={14} /></button>
             </div>
           )}
           <div className="ef-pv-acts">
-            <a
-              className="ef-pv-open-btn"
-              href={file.cloudinary_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open in new tab"
-            >
-              <Icon name="external" size={13} />
-              Open
+            <a className="ef-pv-open-btn" href={file.cloudinary_url} target="_blank" rel="noopener noreferrer">
+              <Icon name="external" size={13} /> Open
             </a>
-            <a
-              className="ef-pv-dl-btn"
-              href={dlUrl}
-              download={file.file_name}
-              title="Download file"
-            >
-              <Icon name="download" size={13} />
-              Download
+            <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}>
+              <Icon name="download" size={13} /> Download
             </a>
           </div>
-          <button className="ef-pv-close" onClick={onClose} title="Close">
-            <Icon name="close" size={16} />
-          </button>
+          <button className="ef-pv-close" onClick={onClose}><Icon name="close" size={16} /></button>
         </div>
 
-        {/* BODY */}
-        <div 
+        <div
           ref={containerRef}
-          className="ef-pv-body" 
+          className="ef-pv-body"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           style={{ cursor: zoom > 1 && img ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
         >
           {img ? (
-            <img 
-              src={file.cloudinary_url} 
+            <img
+              src={file.cloudinary_url}
               alt={file.file_name}
               style={{
                 transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
@@ -389,189 +318,267 @@ function Preview({ file, onClose }) {
               draggable={false}
             />
           ) : pdf ? (
-            <iframe
-              src={`${file.cloudinary_url}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`}
-              title={file.file_name}
-            />
+            <iframe src={`${file.cloudinary_url}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`} title={file.file_name} />
           ) : (doc || xls) ? (
-            <iframe
-              src={getOfficeViewerUrl()}
-              title={file.file_name}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-            />
+            <iframe src={getOfficeViewerUrl()} title={file.file_name} style={{ width: '100%', height: '100%', border: 'none' }} />
           ) : (
             <div className="ef-pv-nopreview">
-              <div className="ef-pv-nopreview-icon">
-                <FileTypeIcon fileType={file.file_type} size={40} />
-              </div>
+              <div className="ef-pv-nopreview-icon"><FileTypeIcon fileType={file.file_type} size={40} /></div>
               <h3>{file.file_name}</h3>
               <p>Preview not available for {label} files</p>
-              <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}>
-                <Icon name="download" size={14} />
-                Download to view
-              </a>
+              <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}><Icon name="download" size={14} /> Download to view</a>
             </div>
           )}
         </div>
 
-        {/* BOTTOM BAR */}
         <div className="ef-pv-bot">
           <span className="ef-pv-path">{file.cloudinary_url}</span>
-          <a
-            className="ef-pv-dl-btn"
-            href={dlUrl}
-            download={file.file_name}
-          >
-            <Icon name="download" size={13} />
-            Download
-          </a>
+          <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}><Icon name="download" size={13} /> Download</a>
         </div>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   MAIN
-══════════════════════════════════════════════════════ */
 export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
-  const [files,     setFiles]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [pending,   setPending]   = useState([]);
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [folders,   setFolders]   = useState([]);
-  const [current,   setCurrent]   = useState(null);
-  const [bc,        setBc]        = useState([]);
-  const [selIds,    setSelIds]    = useState(new Set());
-  const [dialog,    setDialog]    = useState(null);
-  const [moveMenu,  setMoveMenu]  = useState(null);
-  const [preview,   setPreview]   = useState(null);
-  const [dragOver,  setDragOver]  = useState(null);
+  const [folders, setFolders] = useState([]);
+  const [current, setCurrent] = useState(null);
+  const [bc, setBc] = useState([]);
+  const [selIds, setSelIds] = useState(new Set());
+  const [dialog, setDialog] = useState(null);
+  const [moveMenu, setMoveMenu] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
   const fileRef = useRef();
 
+  // Fetch files from backend
   const fetchFiles = useCallback(async () => {
     setLoading(true);
-    try { const r = await axios.get(`/api/employees/${employeeId}/files`); setFiles(r.data); }
-    catch { onNotify('error', 'Failed to load files'); }
-    finally { setLoading(false); }
+    try {
+      const r = await axios.get(`/api/employees/${employeeId}/files`, { withCredentials: true });
+      setFiles(r.data);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      onNotify('error', 'Failed to load files');
+    } finally {
+      setLoading(false);
+    }
+  }, [employeeId, onNotify]);
+
+  // Fetch folders from backend
+  const fetchFolders = useCallback(async () => {
+    try {
+      const r = await axios.get(`/api/employees/${employeeId}/folders`, { withCredentials: true });
+      setFolders(r.data);
+    } catch (err) {
+      console.error('Fetch folders error:', err);
+    }
   }, [employeeId]);
 
   useEffect(() => {
     if (!employeeId) return;
-    setFolders(loadFolders(employeeId));
     fetchFiles();
-  }, [employeeId, fetchFiles]);
+    fetchFolders();
+  }, [employeeId, fetchFiles, fetchFolders]);
 
-  const persist = (next) => { setFolders(next); saveFolders(employeeId, next); };
-
-  /* nav */
-  const openFolder = (f) => { setCurrent(f.id); setBc(p => [...p, {id:f.id, name:f.name}]); setSelIds(new Set()); setMoveMenu(null); };
-  const navTo = (i) => {
-    if (i === -1) { setCurrent(null); setBc([]); }
-    else { const c = bc[i]; setCurrent(c.id); setBc(p => p.slice(0, i+1)); }
-    setSelIds(new Set()); setMoveMenu(null);
+  // Navigation
+  const openFolder = (f) => {
+    setCurrent(f.id);
+    setBc(p => [...p, { id: f.id, name: f.name }]);
+    setSelIds(new Set());
+    setMoveMenu(null);
   };
 
-  /* visible items */
-  const visFolders = current === null ? folders.filter(f => !f.parentId) : folders.filter(f => f.parentId === current);
-  const curFIds    = current ? (folders.find(f => f.id === current)?.fileIds || []) : null;
-  const visFiles   = current === null
+  const navTo = (i) => {
+    if (i === -1) {
+      setCurrent(null);
+      setBc([]);
+    } else {
+      const c = bc[i];
+      setCurrent(c.id);
+      setBc(p => p.slice(0, i + 1));
+    }
+    setSelIds(new Set());
+    setMoveMenu(null);
+  };
+
+  // Get visible items
+  const visFolders = current === null
+    ? folders.filter(f => !f.parentId)
+    : folders.filter(f => f.parentId === current);
+
+  const curFIds = current ? (folders.find(f => f.id === current)?.fileIds || []) : null;
+  const visFiles = current === null
     ? files.filter(f => !folders.some(fo => fo.fileIds.includes(f.id)))
     : files.filter(f => curFIds?.includes(f.id));
 
-  /* upload */
+  // Upload files
   const handleUpload = async () => {
     if (!pending.length) return;
     setUploading(true);
     const fd = new FormData();
     pending.forEach(f => fd.append('files', f));
     try {
-      await axios.post(`/api/employees/${employeeId}/files`, fd, { headers:{'Content-Type':'multipart/form-data'} });
-      const after = await axios.get(`/api/employees/${employeeId}/files`);
-      if (current) {
-        const newIds = after.data.filter(nf => !files.some(of => of.id === nf.id)).map(nf => nf.id);
-        if (newIds.length) persist(folders.map(f => f.id === current ? {...f, fileIds:[...new Set([...f.fileIds, ...newIds])]} : f));
-      }
-      setFiles(after.data);
+      await axios.post(`/api/employees/${employeeId}/files`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true
+      });
+      await fetchFiles();
+      await fetchFolders();
       onNotify('success', `Uploaded ${pending.length} file(s)`);
-      setPending([]); if (fileRef.current) fileRef.current.value = '';
-    } catch (err) { 
+      setPending([]);
+      if (fileRef.current) fileRef.current.value = '';
+    } catch (err) {
       console.error('Upload error:', err);
-      onNotify('error', 'Upload failed'); 
+      onNotify('error', 'Upload failed');
+    } finally {
+      setUploading(false);
     }
-    finally { setUploading(false); }
   };
 
-  /* folder ops */
-  const createFolder = (name) => { setDialog(null); persist([...folders, {id:uid(), name, parentId:current||null, fileIds:[]}]); onNotify('success', `Folder "${name}" created`); };
-  const renameFolder = (name) => { const f = dialog?.item; setDialog(null); persist(folders.map(x => x.id===f.id ? {...x,name} : x)); onNotify('success','Folder renamed'); };
-  const deleteFolder = (f) => {
+  // Create folder
+  const createFolder = async (name) => {
+    setDialog(null);
+    try {
+      await axios.post(`/api/employees/${employeeId}/folders`, {
+        name,
+        parentId: current || null
+      }, { withCredentials: true });
+      await fetchFolders();
+      onNotify('success', `Folder "${name}" created`);
+    } catch (err) {
+      console.error('Create folder error:', err);
+      onNotify('error', 'Failed to create folder');
+    }
+  };
+
+  // Rename folder
+  const renameFolder = async (name) => {
+    const f = dialog?.item;
+    setDialog(null);
+    try {
+      await axios.put(`/api/folders/${f.id}`, { name }, { withCredentials: true });
+      await fetchFolders();
+      onNotify('success', 'Folder renamed');
+    } catch (err) {
+      console.error('Rename folder error:', err);
+      onNotify('error', 'Failed to rename folder');
+    }
+  };
+
+  // Delete folder
+  const deleteFolder = async (f) => {
     if (!window.confirm(`Delete folder "${f.name}"? Files inside will return to root.`)) return;
-    const col = (id) => { const k = folders.filter(x => x.parentId===id); return [id,...k.flatMap(x=>col(x.id))]; };
-    persist(folders.filter(x => !col(f.id).includes(x.id)));
-    onNotify('success','Folder deleted');
+    try {
+      await axios.delete(`/api/folders/${f.id}`, { withCredentials: true });
+      await fetchFolders();
+      onNotify('success', 'Folder deleted');
+    } catch (err) {
+      console.error('Delete folder error:', err);
+      onNotify('error', 'Failed to delete folder');
+    }
   };
 
-  /* file ops */
+  // Rename file
   const renameFile = async (name) => {
-    const f = dialog?.item; setDialog(null);
-    try { await axios.put(`/api/files/${f.id}/rename`, {newName:name}); onNotify('success','File renamed'); fetchFiles(); }
-    catch { onNotify('error','Rename failed'); }
+    const f = dialog?.item;
+    setDialog(null);
+    try {
+      await axios.put(`/api/files/${f.id}/rename`, { newName: name }, { withCredentials: true });
+      await fetchFiles();
+      onNotify('success', 'File renamed');
+    } catch (err) {
+      console.error('Rename file error:', err);
+      onNotify('error', 'Failed to rename file');
+    }
   };
+
+  // Delete file
   const deleteFile = async (f) => {
     if (!window.confirm(`Delete "${f.file_name}"?`)) return;
     try {
-      await axios.delete(`/api/files/${f.id}`);
-      persist(folders.map(x => ({...x, fileIds:x.fileIds.filter(id => id!==f.id)})));
-      onNotify('success','File deleted'); fetchFiles();
-    } catch { onNotify('error','Delete failed'); }
+      await axios.delete(`/api/files/${f.id}`, { withCredentials: true });
+      await fetchFiles();
+      await fetchFolders();
+      onNotify('success', 'File deleted');
+    } catch (err) {
+      console.error('Delete file error:', err);
+      onNotify('error', 'Failed to delete file');
+    }
   };
 
-  /* move */
-  const moveFile = (fileId, targetId) => {
+  // Move file to folder
+  const moveFile = async (fileId, targetId) => {
     setMoveMenu(null);
-    persist(folders.map(f => {
-      const c = {...f, fileIds:f.fileIds.filter(id=>id!==fileId)};
-      if (targetId && f.id===targetId) return {...c, fileIds:[...c.fileIds, fileId]};
-      return c;
-    }));
-    onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
+    try {
+      await axios.post(`/api/folders/${targetId || 'root'}/move-file`, { fileId }, { withCredentials: true });
+      await fetchFolders();
+      onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
+    } catch (err) {
+      console.error('Move file error:', err);
+      onNotify('error', 'Failed to move file');
+    }
   };
 
-  /* drag & drop */
+  // Drag & drop
   const onDragStart = (e, fileId) => { e.dataTransfer.setData('fileId', String(fileId)); };
-  const onDragOver  = (e, fId)    => { e.preventDefault(); setDragOver(fId); };
-  const onDragLeave = ()          => setDragOver(null);
+  const onDragOver = (e, fId) => { e.preventDefault(); setDragOver(fId); };
+  const onDragLeave = () => setDragOver(null);
   const onDrop = (e, fId) => {
-    e.preventDefault(); setDragOver(null);
+    e.preventDefault();
+    setDragOver(null);
     const id = parseInt(e.dataTransfer.getData('fileId'), 10);
     if (id) moveFile(id, fId);
   };
 
-  /* selection */
+  // Selection
   const toggleSel = (uid, e) => {
     e.stopPropagation();
-    setSelIds(p => { const n = new Set(p); n.has(uid) ? n.delete(uid) : n.add(uid); return n; });
+    setSelIds(p => {
+      const n = new Set(p);
+      n.has(uid) ? n.delete(uid) : n.add(uid);
+      return n;
+    });
   };
 
-  /* batch delete */
+  // Batch delete
   const batchDelete = async () => {
     if (!selIds.size || !window.confirm(`Delete ${selIds.size} item(s)?`)) return;
-    const fUids = [...selIds].filter(u=>u.startsWith('file-'));
-    const foUids= [...selIds].filter(u=>u.startsWith('folder-'));
-    for (const u of fUids) { try { await axios.delete(`/api/files/${u.replace('file-','')}`) } catch {} }
-    const foIds = foUids.map(u=>u.replace('folder-',''));
-    const col   = (id) => { const k=folders.filter(f=>f.parentId===id); return [id,...k.flatMap(x=>col(x.id))]; };
-    persist(
-      folders.filter(f=>!foIds.flatMap(id=>col(id)).includes(f.id))
-             .map(f=>({...f, fileIds:f.fileIds.filter(id=>!fUids.includes(`file-${id}`))}))
-    );
-    setSelIds(new Set()); onNotify('success','Deleted'); fetchFiles();
+    const fUids = [...selIds].filter(u => u.startsWith('file-'));
+    const foUids = [...selIds].filter(u => u.startsWith('folder-'));
+
+    for (const u of fUids) {
+      try {
+        await axios.delete(`/api/files/${u.replace('file-', '')}`, { withCredentials: true });
+      } catch (err) {
+        console.error('Delete error:', err);
+      }
+    }
+
+    for (const u of foUids) {
+      try {
+        await axios.delete(`/api/folders/${u.replace('folder-', '')}`, { withCredentials: true });
+      } catch (err) {
+        console.error('Delete folder error:', err);
+      }
+    }
+
+    await fetchFiles();
+    await fetchFolders();
+    setSelIds(new Set());
+    onNotify('success', 'Deleted selected items');
   };
 
   const moveOpts = (fileId) => {
-    const inF = folders.find(f=>f.fileIds.includes(fileId));
-    return { inFolder: inF, opts: folders.filter(f=>f.id!==inF?.id) };
+    const inF = folders.find(f => f.fileIds?.includes(fileId));
+    return {
+      inFolder: inF,
+      opts: folders.filter(f => f.id !== inF?.id)
+    };
   };
 
   const total = visFolders.length + visFiles.length;
@@ -580,20 +587,16 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     <>
       <style>{STYLES}</style>
       <div className="ef">
-
-        {/* HEADER */}
         <div className="ef-head">
           <div className="ef-title">
-            Documents
+            Documents - {employeeName}
             {total > 0 && <span className="ef-count">{total}</span>}
           </div>
         </div>
 
-        {/* BREADCRUMB */}
         <div className="ef-bc">
           <button className="ef-bc-btn" onClick={() => navTo(-1)}>
-            <Icon name="home" size={13} />
-            All Files
+            <Icon name="home" size={13} /> All Files
           </button>
           {bc.map((c, i) => (
             <React.Fragment key={c.id}>
@@ -605,15 +608,19 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
           ))}
         </div>
 
-        {/* TOOLBAR */}
         <div className="ef-bar">
-          <button className="ef-btn ef-btn-ghost" onClick={() => setDialog({type:'newFolder'})}>
+          <button className="ef-btn ef-btn-ghost" onClick={() => setDialog({ type: 'newFolder' })}>
             <Icon name="plus" size={13} /> New Folder
           </button>
-          <input type="file" multiple ref={fileRef} 
+          <input
+            type="file"
+            multiple
+            ref={fileRef}
             accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx"
-            style={{display:'none'}} id={`ef-inp-${employeeId}`} 
-            onChange={e => setPending(Array.from(e.target.files))} />
+            style={{ display: 'none' }}
+            id={`ef-inp-${employeeId}`}
+            onChange={e => setPending(Array.from(e.target.files))}
+          />
           <label htmlFor={`ef-inp-${employeeId}`} className="ef-upload-lbl">
             <Icon name="upload" size={13} /> Choose Files
           </label>
@@ -632,7 +639,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
           </>}
         </div>
 
-        {/* drag hint */}
         {visFiles.length > 0 && visFolders.length > 0 && (
           <div className="ef-hint">
             <Icon name="move" size={11} color="#2e3040" />
@@ -640,7 +646,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
           </div>
         )}
 
-        {/* CONTENT */}
         {loading ? (
           <div className="ef-load"><div className="ef-spin" /> Loading files…</div>
         ) : total === 0 ? (
@@ -651,13 +656,12 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
           </div>
         ) : (
           <div className="ef-grid" onClick={() => setMoveMenu(null)}>
-
-            {/* FOLDERS */}
             {visFolders.map(folder => {
               const k = `folder-${folder.id}`;
               return (
-                <div key={k}
-                  className={`ef-card${selIds.has(k)?' sel':''}${dragOver===folder.id?' drag-over':''}`}
+                <div
+                  key={k}
+                  className={`ef-card${selIds.has(k) ? ' sel' : ''}${dragOver === folder.id ? ' drag-over' : ''}`}
                   onClick={() => openFolder(folder)}
                   onDragOver={e => onDragOver(e, folder.id)}
                   onDragLeave={onDragLeave}
@@ -666,13 +670,13 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                   {selIds.has(k) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
                   <div className="ef-fold-thumb">
                     <Icon name="folder" size={36} color="#6eb5c8" />
-                    <div className="ef-fold-cnt">{folder.fileIds.length} {folder.fileIds.length === 1 ? 'file' : 'files'}</div>
+                    <div className="ef-fold-cnt">{folder.fileIds?.length || 0} {folder.fileIds?.length === 1 ? 'file' : 'files'}</div>
                   </div>
                   <div className="ef-card-body">
                     <div className="ef-card-name" title={folder.name}>{folder.name}</div>
                     <div className="ef-card-meta"><span>Folder</span><span>virtual</span></div>
                     <div className="ef-card-acts">
-                      <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({type:'renameFolder',item:folder}); }}>
+                      <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({ type: 'renameFolder', item: folder }); }}>
                         <Icon name="pencil" size={13} />
                       </button>
                       <button className="ef-act" title="Select" onClick={e => { e.stopPropagation(); toggleSel(k, e); }}>
@@ -687,13 +691,13 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
               );
             })}
 
-            {/* FILES */}
             {visFiles.map(file => {
               const k = `file-${file.id}`;
               const { inFolder, opts } = moveOpts(file.id);
               return (
-                <div key={k}
-                  className={`ef-card${selIds.has(k)?' sel':''}`}
+                <div
+                  key={k}
+                  className={`ef-card${selIds.has(k) ? ' sel' : ''}`}
                   onClick={() => { setMoveMenu(null); setPreview(file); }}
                   draggable
                   onDragStart={e => onDragStart(e, file.id)}
@@ -701,11 +705,11 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                   {selIds.has(k) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
                   <div className="ef-file-thumb">
                     {isImg(file.file_type, file.cloudinary_url)
-                      ? <img src={file.cloudinary_url} alt={file.file_name} onError={e => { e.target.style.display='none'; }} />
+                      ? <img src={file.cloudinary_url} alt={file.file_name} onError={e => { e.target.style.display = 'none'; }} />
                       : <>
-                          <FileTypeIcon fileType={file.file_type} size={30} />
-                          <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
-                        </>
+                        <FileTypeIcon fileType={file.file_type} size={30} />
+                        <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
+                      </>
                     }
                   </div>
                   <div className="ef-card-body">
@@ -718,12 +722,11 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                       <button className="ef-act" title="Preview" onClick={e => { e.stopPropagation(); setPreview(file); }}>
                         <Icon name="eye" size={13} />
                       </button>
-                      <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({type:'renameFile',item:file}); }}>
+                      <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({ type: 'renameFile', item: file }); }}>
                         <Icon name="pencil" size={13} />
                       </button>
-                      {/* move */}
                       <div className="ef-move-wrap" onClick={e => e.stopPropagation()}>
-                        <button className="ef-act" title="Move to folder" onClick={e => { e.stopPropagation(); setMoveMenu(moveMenu===file.id ? null : file.id); }}>
+                        <button className="ef-act" title="Move to folder" onClick={e => { e.stopPropagation(); setMoveMenu(moveMenu === file.id ? null : file.id); }}>
                           <Icon name="folder" size={13} />
                         </button>
                         {moveMenu === file.id && (
@@ -736,10 +739,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                             {opts.length === 0 && !inFolder
                               ? <div className="ef-move-opt empty">No folders yet</div>
                               : opts.map(f => (
-                                  <div key={f.id} className="ef-move-opt" onClick={() => moveFile(file.id, f.id)}>
-                                    <Icon name="folder" size={11} color="#6eb5c8" /> {f.name}
-                                  </div>
-                                ))
+                                <div key={f.id} className="ef-move-opt" onClick={() => moveFile(file.id, f.id)}>
+                                  <Icon name="folder" size={11} color="#6eb5c8" /> {f.name}
+                                </div>
+                              ))
                             }
                           </div>
                         )}
@@ -755,14 +758,13 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                 </div>
               );
             })}
-
           </div>
         )}
       </div>
 
-      {dialog?.type==='newFolder'    && <Dialog title="New Folder"    placeholder="Folder name…"           onConfirm={createFolder} onCancel={()=>setDialog(null)} />}
-      {dialog?.type==='renameFolder' && <Dialog title="Rename Folder" defaultValue={dialog.item.name}      onConfirm={renameFolder} onCancel={()=>setDialog(null)} />}
-      {dialog?.type==='renameFile'   && <Dialog title="Rename File"   defaultValue={dialog.item.file_name} onConfirm={renameFile}   onCancel={()=>setDialog(null)} />}
+      {dialog?.type === 'newFolder' && <Dialog title="New Folder" placeholder="Folder name…" onConfirm={createFolder} onCancel={() => setDialog(null)} />}
+      {dialog?.type === 'renameFolder' && <Dialog title="Rename Folder" defaultValue={dialog.item.name} onConfirm={renameFolder} onCancel={() => setDialog(null)} />}
+      {dialog?.type === 'renameFile' && <Dialog title="Rename File" defaultValue={dialog.item.file_name} onConfirm={renameFile} onCancel={() => setDialog(null)} />}
       {preview && <Preview file={preview} onClose={() => setPreview(null)} />}
     </>
   );
