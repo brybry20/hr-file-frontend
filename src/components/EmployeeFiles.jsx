@@ -72,7 +72,7 @@ const FileTypeIcon = ({ fileType, size = 32 }) => {
   return <Icon name={name} size={size} color={color} />;
 };
 
-/* ─── styles (same as before) ─── */
+/* ─── styles ─── */
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap');
 
@@ -353,23 +353,21 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [moveMenu, setMoveMenu] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const [currentFolderFiles, setCurrentFolderFiles] = useState([]);
   const fileRef = useRef();
 
-  // Fetch files from backend
+  // Fetch all files
   const fetchFiles = useCallback(async () => {
-    setLoading(true);
     try {
       const r = await axios.get(`/api/employees/${employeeId}/files`, { withCredentials: true });
       setFiles(r.data);
     } catch (err) {
       console.error('Fetch error:', err);
       onNotify('error', 'Failed to load files');
-    } finally {
-      setLoading(false);
     }
   }, [employeeId, onNotify]);
 
-  // Fetch folders from backend
+  // Fetch folders
   const fetchFolders = useCallback(async () => {
     try {
       const r = await axios.get(`/api/employees/${employeeId}/folders`, { withCredentials: true });
@@ -379,11 +377,30 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
   }, [employeeId]);
 
+  // Fetch files for current folder
+  const fetchCurrentFolderFiles = useCallback(async () => {
+    try {
+      const response = await axios.get(`/api/employees/${employeeId}/folder-files`, {
+        params: { folderId: current },
+        withCredentials: true
+      });
+      setCurrentFolderFiles(response.data);
+    } catch (err) {
+      console.error('Error fetching folder files:', err);
+    }
+  }, [employeeId, current]);
+
   useEffect(() => {
     if (!employeeId) return;
-    fetchFiles();
-    fetchFolders();
+    setLoading(true);
+    Promise.all([fetchFiles(), fetchFolders()]).finally(() => setLoading(false));
   }, [employeeId, fetchFiles, fetchFolders]);
+
+  useEffect(() => {
+    if (employeeId) {
+      fetchCurrentFolderFiles();
+    }
+  }, [employeeId, current, fetchCurrentFolderFiles]);
 
   // Navigation
   const openFolder = (f) => {
@@ -410,11 +427,8 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const visFolders = current === null
     ? folders.filter(f => !f.parentId)
     : folders.filter(f => f.parentId === current);
-
-  const curFIds = current ? (folders.find(f => f.id === current)?.fileIds || []) : null;
-  const visFiles = current === null
-    ? files.filter(f => !folders.some(fo => fo.fileIds.includes(f.id)))
-    : files.filter(f => curFIds?.includes(f.id));
+  
+  const visFiles = currentFolderFiles;
 
   // Upload files
   const handleUpload = async () => {
@@ -423,12 +437,23 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     const fd = new FormData();
     pending.forEach(f => fd.append('files', f));
     try {
-      await axios.post(`/api/employees/${employeeId}/files`, fd, {
+      const uploadResponse = await axios.post(`/api/employees/${employeeId}/files`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
+      
+      const newFiles = uploadResponse.data.files;
+      
+      // If we're in a folder, add these files to that folder
+      if (current && newFiles.length > 0) {
+        for (const file of newFiles) {
+          await axios.post(`/api/folders/${current}/move-file`, { fileId: file.id }, { withCredentials: true });
+        }
+      }
+      
       await fetchFiles();
       await fetchFolders();
+      await fetchCurrentFolderFiles();
       onNotify('success', `Uploaded ${pending.length} file(s)`);
       setPending([]);
       if (fileRef.current) fileRef.current.value = '';
@@ -476,6 +501,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.delete(`/api/folders/${f.id}`, { withCredentials: true });
       await fetchFolders();
+      await fetchCurrentFolderFiles();
       onNotify('success', 'Folder deleted');
     } catch (err) {
       console.error('Delete folder error:', err);
@@ -490,6 +516,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.put(`/api/files/${f.id}/rename`, { newName: name }, { withCredentials: true });
       await fetchFiles();
+      await fetchCurrentFolderFiles();
       onNotify('success', 'File renamed');
     } catch (err) {
       console.error('Rename file error:', err);
@@ -504,6 +531,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       await axios.delete(`/api/files/${f.id}`, { withCredentials: true });
       await fetchFiles();
       await fetchFolders();
+      await fetchCurrentFolderFiles();
       onNotify('success', 'File deleted');
     } catch (err) {
       console.error('Delete file error:', err);
@@ -517,6 +545,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.post(`/api/folders/${targetId || 'root'}/move-file`, { fileId }, { withCredentials: true });
       await fetchFolders();
+      await fetchCurrentFolderFiles();
       onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
     } catch (err) {
       console.error('Move file error:', err);
@@ -569,6 +598,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
 
     await fetchFiles();
     await fetchFolders();
+    await fetchCurrentFolderFiles();
     setSelIds(new Set());
     onNotify('success', 'Deleted selected items');
   };
