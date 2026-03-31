@@ -72,22 +72,18 @@ const FileTypeIcon = ({ fileType, size = 32 }) => {
   return <Icon name={name} size={size} color={color} />;
 };
 
-/* ─── styles ─── */
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap');
 
   .ef { font-family:'Syne',sans-serif; background:#13151c; border-radius:16px; color:#d4d0c8; padding:20px; }
-
   .ef-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; }
   .ef-title { font-family:'DM Serif Display',serif; font-size:17px; color:#e8e4dc; display:flex; align-items:center; gap:10px; }
   .ef-count { background:rgba(110,181,200,0.15); color:#6eb5c8; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-
   .ef-bc { display:flex; align-items:center; gap:4px; font-size:12px; margin-bottom:14px; flex-wrap:wrap; min-height:20px; }
   .ef-bc-btn { display:flex; align-items:center; gap:4px; color:#6eb5c8; cursor:pointer; background:none; border:none; font-family:'Syne',sans-serif; font-size:12px; padding:2px 6px; border-radius:6px; transition:background 0.15s; }
   .ef-bc-btn:hover { background:rgba(110,181,200,0.1); }
   .ef-bc-sep { color:#2e3040; }
   .ef-bc-cur { color:#6a6a7a; font-size:12px; padding:2px 4px; }
-
   .ef-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.05); }
   .ef-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:none; font-size:12px; font-family:'Syne',sans-serif; font-weight:600; cursor:pointer; transition:all 0.17s; white-space:nowrap; }
   .ef-btn:disabled { opacity:.4; cursor:not-allowed; }
@@ -101,25 +97,19 @@ const STYLES = `
   .ef-upload-lbl:hover { background:rgba(110,181,200,0.16); transform:translateY(-1px); }
   .ef-ready-badge { background:rgba(110,181,200,0.15); color:#6eb5c8; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; }
   .ef-sel-info { font-size:12px; color:#6eb5c8; margin-left:auto; }
-
   .ef-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:12px; max-height:520px; overflow-y:auto; padding:2px; }
   .ef-grid::-webkit-scrollbar { width:3px; }
   .ef-grid::-webkit-scrollbar-thumb { background:rgba(110,181,200,0.2); border-radius:3px; }
-
   .ef-card { background:#1a1d27; border:1.5px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden; cursor:pointer; transition:all 0.18s; position:relative; user-select:none; }
   .ef-card:hover { border-color:rgba(110,181,200,0.35); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
   .ef-card.sel { border-color:#6eb5c8; box-shadow:0 0 0 2px rgba(110,181,200,0.2); }
   .ef-card.drag-over { border-color:#6eb5c8 !important; background:rgba(110,181,200,0.07) !important; }
-
   .ef-chk { position:absolute; top:8px; left:8px; z-index:3; width:18px; height:18px; border-radius:5px; background:#6eb5c8; display:flex; align-items:center; justify-content:center; }
-
   .ef-fold-thumb { width:100%; height:100px; background:linear-gradient(140deg,#1d2133 0%,#161924 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; }
   .ef-fold-cnt { font-size:10px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 10px; border-radius:20px; font-family:'DM Mono',monospace; }
-
   .ef-file-thumb { width:100%; height:100px; background:#0f1117; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; overflow:hidden; position:relative; }
   .ef-file-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .ef-type-tag { font-size:9px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 8px; border-radius:20px; font-family:'DM Mono',monospace; }
-
   .ef-card-body { padding:9px 10px; border-top:1px solid rgba(255,255,255,0.05); }
   .ef-card-name { font-size:11px; font-weight:600; color:#dedad2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
   .ef-card-meta { display:flex; justify-content:space-between; font-size:10px; color:#454555; font-family:'DM Mono',monospace; margin-bottom:8px; }
@@ -127,35 +117,28 @@ const STYLES = `
   .ef-act { flex:1; background:rgba(255,255,255,0.04); border:none; border-radius:6px; padding:5px 4px; cursor:pointer; color:#585868; transition:all 0.16s; display:flex; align-items:center; justify-content:center; }
   .ef-act:hover { background:rgba(110,181,200,0.13); color:#6eb5c8; }
   .ef-act.danger:hover { background:rgba(224,90,90,0.13); color:#e07a7a; }
-
   .ef-move-wrap { position:relative; flex:1; }
   .ef-move-drop { position:absolute; bottom:calc(100% + 6px); left:0; min-width:160px; background:#1a1d2b; border:1px solid rgba(110,181,200,0.18); border-radius:10px; padding:4px; z-index:300; box-shadow:0 12px 32px rgba(0,0,0,0.5); }
   .ef-move-opt { padding:6px 10px; font-size:11px; color:#9a96a0; border-radius:6px; cursor:pointer; transition:all 0.14s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px; }
   .ef-move-opt:hover { background:rgba(110,181,200,0.13); color:#6eb5c8; }
   .ef-move-opt.to-root { color:#e0b07a; }
   .ef-move-opt.empty { color:#383848; cursor:default; }
-
   .ef-hint { font-size:11px; color:#2e3040; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
-
   .ef-empty { text-align:center; padding:52px 20px; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .ef-empty-icon { color:#252838; }
   .ef-empty-text { font-size:13px; color:#4a4a5a; }
   .ef-empty-sub { font-size:11px; color:#2e3040; }
-
   .ef-load { display:flex; justify-content:center; align-items:center; padding:56px; gap:10px; color:#4a4a5a; font-size:12px; }
   .ef-spin { width:22px; height:22px; border:2px solid rgba(255,255,255,0.06); border-top-color:#6eb5c8; border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
-
   .ef-dlg-bg { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
   .ef-dlg { background:#1a1d27; border:1px solid rgba(110,181,200,0.16); border-radius:16px; padding:26px; width:340px; }
   .ef-dlg-title { font-family:'DM Serif Display',serif; font-size:17px; color:#e8e4dc; margin-bottom:14px; }
   .ef-dlg-inp { width:100%; background:#0f1117; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:9px 12px; color:#e8e4dc; font-size:13px; font-family:'Syne',sans-serif; outline:none; box-sizing:border-box; }
   .ef-dlg-inp:focus { border-color:rgba(110,181,200,0.4); }
   .ef-dlg-acts { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
-
   .ef-pv-bg { position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
   .ef-pv { display:flex; flex-direction:column; width:92vw; height:90vh; max-width:1100px; background:#13151c; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); }
-
   .ef-pv-top { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#0f1117; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
   .ef-pv-icon { width:36px; height:36px; border-radius:8px; background:rgba(110,181,200,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .ef-pv-info { flex:1; min-width:0; }
@@ -168,17 +151,14 @@ const STYLES = `
   .ef-pv-acts { display:flex; gap:6px; flex-shrink:0; }
   .ef-pv-close { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.05); border:none; color:#9a96a0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .ef-pv-close:hover { background:rgba(224,90,90,0.2); color:#e07a7a; }
-
   .ef-pv-body { flex:1; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#0c0e14; position:relative; cursor:grab; }
   .ef-pv-body:active { cursor:grabbing; }
   .ef-pv-body img { max-width:100%; max-height:100%; object-fit:contain; transition:transform 0.2s ease; transform-origin:center; }
   .ef-pv-body iframe { width:100%; height:100%; border:none; }
-
   .ef-pv-nopreview { display:flex; flex-direction:column; align-items:center; gap:16px; }
   .ef-pv-nopreview-icon { width:80px; height:80px; border-radius:20px; background:rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; }
   .ef-pv-nopreview h3 { font-family:'DM Serif Display',serif; font-size:18px; color:#e8e4dc; margin:0; }
   .ef-pv-nopreview p { font-size:12px; color:#4a4a5a; margin:0; }
-
   .ef-pv-bot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; background:#0f1117; border-top:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
   .ef-pv-path { font-size:10px; color:#383848; font-family:'DM Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
   .ef-pv-dl-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:#6eb5c8; color:#0b0d12; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; }
@@ -343,6 +323,7 @@ function Preview({ file, onClose }) {
 export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [pending, setPending] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [folders, setFolders] = useState([]);
@@ -353,22 +334,35 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [moveMenu, setMoveMenu] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragOver, setDragOver] = useState(null);
-  const [currentFolderFiles, setCurrentFolderFiles] = useState([]);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const fileRef = useRef();
 
-  // Fetch all files
+  // Fetch files from backend
   const fetchFiles = useCallback(async () => {
+    if (!employeeId) return;
+    setLoading(true);
     try {
-      const r = await axios.get(`/api/employees/${employeeId}/files`, { withCredentials: true });
+      const params = current ? { folderId: current } : {};
+      const r = await axios.get(`/api/employees/${employeeId}/files`, { 
+        params,
+        withCredentials: true 
+      });
       setFiles(r.data);
     } catch (err) {
       console.error('Fetch error:', err);
-      onNotify('error', 'Failed to load files');
+      if (err.response?.status === 500) {
+        onNotify('error', 'Database error - please refresh');
+      } else {
+        onNotify('error', 'Failed to load files');
+      }
+    } finally {
+      setLoading(false);
     }
-  }, [employeeId, onNotify]);
+  }, [employeeId, current, onNotify]);
 
-  // Fetch folders
+  // Fetch folders from backend
   const fetchFolders = useCallback(async () => {
+    if (!employeeId) return;
     try {
       const r = await axios.get(`/api/employees/${employeeId}/folders`, { withCredentials: true });
       setFolders(r.data);
@@ -377,35 +371,16 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
   }, [employeeId]);
 
-  // Fetch files for current folder
-  const fetchCurrentFolderFiles = useCallback(async () => {
-    try {
-      const response = await axios.get(`/api/employees/${employeeId}/folder-files`, {
-        params: { folderId: current },
-        withCredentials: true
-      });
-      setCurrentFolderFiles(response.data);
-    } catch (err) {
-      console.error('Error fetching folder files:', err);
-    }
-  }, [employeeId, current]);
-
   useEffect(() => {
     if (!employeeId) return;
-    setLoading(true);
-    Promise.all([fetchFiles(), fetchFolders()]).finally(() => setLoading(false));
+    fetchFiles();
+    fetchFolders();
   }, [employeeId, fetchFiles, fetchFolders]);
-
-  useEffect(() => {
-    if (employeeId) {
-      fetchCurrentFolderFiles();
-    }
-  }, [employeeId, current, fetchCurrentFolderFiles]);
 
   // Navigation
   const openFolder = (f) => {
     setCurrent(f.id);
-    setBc(p => [...p, { id: f.id, name: f.name }]);
+    setBc(p => [...p, { id: f.id, name: f.folder_name }]);
     setSelIds(new Set());
     setMoveMenu(null);
   };
@@ -423,45 +398,53 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setMoveMenu(null);
   };
 
-  // Get visible items
+  // Get visible folders (only direct children of current folder)
   const visFolders = current === null
-    ? folders.filter(f => !f.parentId)
-    : folders.filter(f => f.parentId === current);
-  
-  const visFiles = currentFolderFiles;
+    ? folders.filter(f => !f.parent_folder_id)
+    : folders.filter(f => f.parent_folder_id === current);
 
-  // Upload files
+  // Upload files with progress
   const handleUpload = async () => {
     if (!pending.length) return;
     setUploading(true);
+    setUploadProgress(0);
+    onNotify('info', `Uploading ${pending.length} file(s)...`);
+    
     const fd = new FormData();
     pending.forEach(f => fd.append('files', f));
+    
     try {
-      const uploadResponse = await axios.post(`/api/employees/${employeeId}/files`, fd, {
+      const response = await axios.post(`/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true
+        withCredentials: true,
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percent);
+        }
       });
       
-      const newFiles = uploadResponse.data.files;
-      
-      // If we're in a folder, add these files to that folder
-      if (current && newFiles.length > 0) {
-        for (const file of newFiles) {
-          await axios.post(`/api/folders/${current}/move-file`, { fileId: file.id }, { withCredentials: true });
+      if (response.data.success || response.data.partial) {
+        await fetchFiles();
+        await fetchFolders();
+        
+        if (response.data.partial) {
+          onNotify('warning', `Uploaded ${response.data.success?.length || 0} files, ${response.data.failed?.length || 0} failed`);
+        } else {
+          onNotify('success', `Uploaded ${pending.length} file(s) successfully!`);
         }
+        
+        setPending([]);
+        if (fileRef.current) fileRef.current.value = '';
+      } else {
+        onNotify('error', response.data.error || 'Upload failed');
       }
-      
-      await fetchFiles();
-      await fetchFolders();
-      await fetchCurrentFolderFiles();
-      onNotify('success', `Uploaded ${pending.length} file(s)`);
-      setPending([]);
-      if (fileRef.current) fileRef.current.value = '';
     } catch (err) {
       console.error('Upload error:', err);
-      onNotify('error', 'Upload failed');
+      const errorMsg = err.response?.data?.error || err.message || 'Upload failed';
+      onNotify('error', errorMsg);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -471,7 +454,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.post(`/api/employees/${employeeId}/folders`, {
         name,
-        parentId: current || null
+        parentFolderId: current || null
       }, { withCredentials: true });
       await fetchFolders();
       onNotify('success', `Folder "${name}" created`);
@@ -488,6 +471,9 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.put(`/api/folders/${f.id}`, { name }, { withCredentials: true });
       await fetchFolders();
+      if (current === f.id) {
+        setBc(prev => prev.map((c, i) => i === prev.length - 1 ? { ...c, name } : c));
+      }
       onNotify('success', 'Folder renamed');
     } catch (err) {
       console.error('Rename folder error:', err);
@@ -497,11 +483,15 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
 
   // Delete folder
   const deleteFolder = async (f) => {
-    if (!window.confirm(`Delete folder "${f.name}"? Files inside will return to root.`)) return;
+    if (!window.confirm(`Delete folder "${f.folder_name}"? Files will be moved to parent folder.`)) return;
     try {
       await axios.delete(`/api/folders/${f.id}`, { withCredentials: true });
       await fetchFolders();
-      await fetchCurrentFolderFiles();
+      await fetchFiles();
+      if (current === f.id) {
+        setCurrent(f.parent_folder_id);
+        setBc(prev => prev.slice(0, -1));
+      }
       onNotify('success', 'Folder deleted');
     } catch (err) {
       console.error('Delete folder error:', err);
@@ -516,7 +506,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.put(`/api/files/${f.id}/rename`, { newName: name }, { withCredentials: true });
       await fetchFiles();
-      await fetchCurrentFolderFiles();
       onNotify('success', 'File renamed');
     } catch (err) {
       console.error('Rename file error:', err);
@@ -531,7 +520,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       await axios.delete(`/api/files/${f.id}`, { withCredentials: true });
       await fetchFiles();
       await fetchFolders();
-      await fetchCurrentFolderFiles();
       onNotify('success', 'File deleted');
     } catch (err) {
       console.error('Delete file error:', err);
@@ -543,9 +531,8 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const moveFile = async (fileId, targetId) => {
     setMoveMenu(null);
     try {
-      await axios.post(`/api/folders/${targetId || 'root'}/move-file`, { fileId }, { withCredentials: true });
-      await fetchFolders();
-      await fetchCurrentFolderFiles();
+      await axios.put(`/api/files/${fileId}/move`, { folderId: targetId || null }, { withCredentials: true });
+      await fetchFiles();
       onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
     } catch (err) {
       console.error('Move file error:', err);
@@ -574,44 +561,59 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     });
   };
 
-  // Batch delete
+  // Batch delete with progress
   const batchDelete = async () => {
-    if (!selIds.size || !window.confirm(`Delete ${selIds.size} item(s)?`)) return;
+    if (!selIds.size) return;
+    
+    const fileCount = [...selIds].filter(id => id.startsWith('file-')).length;
+    const folderCount = [...selIds].filter(id => id.startsWith('folder-')).length;
+    
+    if (!window.confirm(`Delete ${fileCount} file(s) and ${folderCount} folder(s)?`)) return;
+    
+    setDeleteLoading(true);
+    onNotify('info', `Deleting ${selIds.size} item(s)...`);
+    
     const fUids = [...selIds].filter(u => u.startsWith('file-'));
     const foUids = [...selIds].filter(u => u.startsWith('folder-'));
-
+    
+    let deletedFiles = 0;
+    let deletedFolders = 0;
+    let failedFiles = 0;
+    let failedFolders = 0;
+    
     for (const u of fUids) {
       try {
         await axios.delete(`/api/files/${u.replace('file-', '')}`, { withCredentials: true });
+        deletedFiles++;
       } catch (err) {
-        console.error('Delete error:', err);
+        console.error('Delete file error:', err);
+        failedFiles++;
       }
     }
-
+    
     for (const u of foUids) {
       try {
         await axios.delete(`/api/folders/${u.replace('folder-', '')}`, { withCredentials: true });
+        deletedFolders++;
       } catch (err) {
         console.error('Delete folder error:', err);
+        failedFolders++;
       }
     }
-
+    
     await fetchFiles();
     await fetchFolders();
-    await fetchCurrentFolderFiles();
     setSelIds(new Set());
-    onNotify('success', 'Deleted selected items');
+    setDeleteLoading(false);
+    
+    if (failedFiles === 0 && failedFolders === 0) {
+      onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
+    } else {
+      onNotify('warning', `Deleted ${deletedFiles}/${fileCount} files, ${deletedFolders}/${folderCount} folders. Failed: ${failedFiles + failedFolders}`);
+    }
   };
 
-  const moveOpts = (fileId) => {
-    const inF = folders.find(f => f.fileIds?.includes(fileId));
-    return {
-      inFolder: inF,
-      opts: folders.filter(f => f.id !== inF?.id)
-    };
-  };
-
-  const total = visFolders.length + visFiles.length;
+  const total = visFolders.length + files.length;
 
   return (
     <>
@@ -654,22 +656,35 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
           <label htmlFor={`ef-inp-${employeeId}`} className="ef-upload-lbl">
             <Icon name="upload" size={13} /> Choose Files
           </label>
-          {pending.length > 0 && <>
-            <span className="ef-ready-badge">{pending.length} ready</span>
-            <button className="ef-btn ef-btn-primary" onClick={handleUpload} disabled={uploading}>
-              <Icon name="upload" size={13} color="#0b0d12" />
-              {uploading ? 'Uploading…' : 'Upload'}
-            </button>
-          </>}
-          {selIds.size > 0 && <>
-            <span className="ef-sel-info">{selIds.size} selected</span>
-            <button className="ef-btn ef-btn-danger" onClick={batchDelete}>
-              <Icon name="trash" size={13} color="#e07a7a" /> Delete Selected
-            </button>
-          </>}
+          {pending.length > 0 && (
+            <>
+              <span className="ef-ready-badge">{pending.length} ready</span>
+              {uploading && uploadProgress > 0 && (
+                <span className="ef-ready-badge">{uploadProgress}%</span>
+              )}
+              <button className="ef-btn ef-btn-primary" onClick={handleUpload} disabled={uploading}>
+                <Icon name="upload" size={13} color="#0b0d12" />
+                {uploading ? `Uploading ${uploadProgress}%...` : 'Upload'}
+              </button>
+              {!uploading && (
+                <button className="ef-btn ef-btn-ghost" onClick={() => { setPending([]); if (fileRef.current) fileRef.current.value = ''; }}>
+                  Cancel
+                </button>
+              )}
+            </>
+          )}
+          {selIds.size > 0 && (
+            <>
+              <span className="ef-sel-info">{selIds.size} selected</span>
+              <button className="ef-btn ef-btn-danger" onClick={batchDelete} disabled={deleteLoading}>
+                <Icon name="trash" size={13} color="#e07a7a" />
+                {deleteLoading ? 'Deleting...' : 'Delete Selected'}
+              </button>
+            </>
+          )}
         </div>
 
-        {visFiles.length > 0 && visFolders.length > 0 && (
+        {files.length > 0 && visFolders.length > 0 && (
           <div className="ef-hint">
             <Icon name="move" size={11} color="#2e3040" />
             Drag a file onto a folder to move it
@@ -687,29 +702,29 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         ) : (
           <div className="ef-grid" onClick={() => setMoveMenu(null)}>
             {visFolders.map(folder => {
-              const k = `folder-${folder.id}`;
+              const folderId = `folder-${folder.id}`;
               return (
                 <div
-                  key={k}
-                  className={`ef-card${selIds.has(k) ? ' sel' : ''}${dragOver === folder.id ? ' drag-over' : ''}`}
+                  key={folder.id}
+                  className={`ef-card${selIds.has(folderId) ? ' sel' : ''}${dragOver === folder.id ? ' drag-over' : ''}`}
                   onClick={() => openFolder(folder)}
                   onDragOver={e => onDragOver(e, folder.id)}
                   onDragLeave={onDragLeave}
                   onDrop={e => onDrop(e, folder.id)}
                 >
-                  {selIds.has(k) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
+                  {selIds.has(folderId) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
                   <div className="ef-fold-thumb">
                     <Icon name="folder" size={36} color="#6eb5c8" />
-                    <div className="ef-fold-cnt">{folder.fileIds?.length || 0} {folder.fileIds?.length === 1 ? 'file' : 'files'}</div>
+                    <div className="ef-fold-cnt">Folder</div>
                   </div>
                   <div className="ef-card-body">
-                    <div className="ef-card-name" title={folder.name}>{folder.name}</div>
-                    <div className="ef-card-meta"><span>Folder</span><span>virtual</span></div>
+                    <div className="ef-card-name" title={folder.folder_name}>{folder.folder_name}</div>
+                    <div className="ef-card-meta"><span>Folder</span></div>
                     <div className="ef-card-acts">
                       <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({ type: 'renameFolder', item: folder }); }}>
                         <Icon name="pencil" size={13} />
                       </button>
-                      <button className="ef-act" title="Select" onClick={e => { e.stopPropagation(); toggleSel(k, e); }}>
+                      <button className="ef-act" title="Select" onClick={e => { e.stopPropagation(); toggleSel(folderId, e); }}>
                         <Icon name="check" size={13} />
                       </button>
                       <button className="ef-act danger" title="Delete" onClick={e => { e.stopPropagation(); deleteFolder(folder); }}>
@@ -721,25 +736,24 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
               );
             })}
 
-            {visFiles.map(file => {
-              const k = `file-${file.id}`;
-              const { inFolder, opts } = moveOpts(file.id);
+            {files.map(file => {
+              const fileId = `file-${file.id}`;
               return (
                 <div
-                  key={k}
-                  className={`ef-card${selIds.has(k) ? ' sel' : ''}`}
+                  key={file.id}
+                  className={`ef-card${selIds.has(fileId) ? ' sel' : ''}`}
                   onClick={() => { setMoveMenu(null); setPreview(file); }}
                   draggable
                   onDragStart={e => onDragStart(e, file.id)}
                 >
-                  {selIds.has(k) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
+                  {selIds.has(fileId) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
                   <div className="ef-file-thumb">
                     {isImg(file.file_type, file.cloudinary_url)
                       ? <img src={file.cloudinary_url} alt={file.file_name} onError={e => { e.target.style.display = 'none'; }} />
                       : <>
-                        <FileTypeIcon fileType={file.file_type} size={30} />
-                        <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
-                      </>
+                          <FileTypeIcon fileType={file.file_type} size={30} />
+                          <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
+                        </>
                     }
                   </div>
                   <div className="ef-card-body">
@@ -761,23 +775,21 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                         </button>
                         {moveMenu === file.id && (
                           <div className="ef-move-drop">
-                            {inFolder && (
-                              <div className="ef-move-opt to-root" onClick={() => moveFile(file.id, null)}>
-                                <Icon name="home" size={11} color="#e0b07a" /> Remove from folder
+                            <div className="ef-move-opt to-root" onClick={() => moveFile(file.id, null)}>
+                              <Icon name="home" size={11} color="#e0b07a" /> Move to Root
+                            </div>
+                            {folders.filter(f => f.id !== current).map(folder => (
+                              <div key={folder.id} className="ef-move-opt" onClick={() => moveFile(file.id, folder.id)}>
+                                <Icon name="folder" size={11} color="#6eb5c8" /> {folder.folder_name}
                               </div>
+                            ))}
+                            {folders.filter(f => f.id !== current).length === 0 && (
+                              <div className="ef-move-opt empty">No other folders</div>
                             )}
-                            {opts.length === 0 && !inFolder
-                              ? <div className="ef-move-opt empty">No folders yet</div>
-                              : opts.map(f => (
-                                <div key={f.id} className="ef-move-opt" onClick={() => moveFile(file.id, f.id)}>
-                                  <Icon name="folder" size={11} color="#6eb5c8" /> {f.name}
-                                </div>
-                              ))
-                            }
                           </div>
                         )}
                       </div>
-                      <button className="ef-act" title="Select" onClick={e => { e.stopPropagation(); toggleSel(k, e); }}>
+                      <button className="ef-act" title="Select" onClick={e => { e.stopPropagation(); toggleSel(fileId, e); }}>
                         <Icon name="check" size={13} />
                       </button>
                       <button className="ef-act danger" title="Delete" onClick={e => { e.stopPropagation(); deleteFile(file); }}>
@@ -793,7 +805,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       </div>
 
       {dialog?.type === 'newFolder' && <Dialog title="New Folder" placeholder="Folder name…" onConfirm={createFolder} onCancel={() => setDialog(null)} />}
-      {dialog?.type === 'renameFolder' && <Dialog title="Rename Folder" defaultValue={dialog.item.name} onConfirm={renameFolder} onCancel={() => setDialog(null)} />}
+      {dialog?.type === 'renameFolder' && <Dialog title="Rename Folder" defaultValue={dialog.item.folder_name} onConfirm={renameFolder} onCancel={() => setDialog(null)} />}
       {dialog?.type === 'renameFile' && <Dialog title="Rename File" defaultValue={dialog.item.file_name} onConfirm={renameFile} onCancel={() => setDialog(null)} />}
       {preview && <Preview file={preview} onClose={() => setPreview(null)} />}
     </>
