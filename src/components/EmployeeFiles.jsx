@@ -3,18 +3,49 @@ import axios from 'axios';
 
 axios.defaults.withCredentials = true;
 
-/* ─── file type helpers ─── */
-const isImg = (t, u) => t?.includes('image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(u || '');
-const isPdf = (t, u) => t?.includes('pdf') || /\.pdf$/i.test(u || '');
-const isDoc = (t) => t?.includes('word') || t?.includes('document') || t?.includes('msword') || t?.includes('openxmlformats-officedocument.wordprocessingml');
-const isXls = (t) => t?.includes('sheet') || t?.includes('excel') || t?.includes('spreadsheetml') || t?.includes('ms-excel');
+/* ─── file type helpers - IMPROVED ─── */
+const isImg = (t, u) => {
+  if (!t && !u) return false;
+  if (t?.startsWith('image/')) return true;
+  if (u && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(u)) return true;
+  return false;
+};
+
+const isPdf = (t, u) => {
+  if (!t && !u) return false;
+  if (t === 'application/pdf') return true;
+  if (u && /\.pdf$/i.test(u)) return true;
+  return false;
+};
+
+const isDoc = (t) => {
+  if (!t) return false;
+  const docTypes = [
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.template'
+  ];
+  return docTypes.some(type => t.includes(type)) || t.includes('word') || t.includes('document');
+};
+
+const isXls = (t) => {
+  if (!t) return false;
+  const xlsTypes = [
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.ms-excel.sheet.macroEnabled.12'
+  ];
+  return xlsTypes.some(type => t.includes(type)) || t.includes('sheet') || t.includes('excel');
+};
 
 const fileTypeLabel = (t) => {
   if (!t) return 'FILE';
-  if (t.includes('pdf')) return 'PDF';
-  if (t.includes('word') || t.includes('document')) return 'DOC';
-  if (t.includes('sheet') || t.includes('excel')) return 'XLS';
-  if (t.includes('image')) return 'IMG';
+  if (isPdf(t)) return 'PDF';
+  if (isDoc(t)) return 'DOC';
+  if (isXls(t)) return 'XLS';
+  if (isImg(t)) return 'IMG';
   return 'FILE';
 };
 
@@ -48,6 +79,7 @@ const Icon = ({ name, size = 16, color = 'currentColor' }) => {
     check: <><path d="M20 6L9 17l-5-5" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></>,
     close: <><path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>,
     external: <><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
+    chevronL: <><path d="M15 18l-6-6 6-6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
     chevronR: <><path d="M9 18l6-6-6-6" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></>,
     home: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M9 22V12h6v10" fill="none" stroke={color} strokeWidth="1.5"/></>,
     eye: <><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" fill="none" stroke={color} strokeWidth="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke={color} strokeWidth="1.5"/></>,
@@ -65,13 +97,24 @@ const Icon = ({ name, size = 16, color = 'currentColor' }) => {
 const FileTypeIcon = ({ fileType, size = 32 }) => {
   const colors = { img: '#6eb5c8', pdf: '#e07a7a', doc: '#7ab4e0', xls: '#7ae0a0', file: '#9a96a0' };
   let name = 'file', color = colors.file;
-  if (isImg(fileType)) { name = 'image'; color = colors.img; }
-  else if (isPdf(fileType)) { name = 'pdf'; color = colors.pdf; }
-  else if (isDoc(fileType)) { name = 'doc'; color = colors.doc; }
-  else if (isXls(fileType)) { name = 'xls'; color = colors.xls; }
+  
+  if (isImg(fileType)) { 
+    name = 'image'; 
+    color = colors.img; 
+  } else if (isPdf(fileType)) { 
+    name = 'pdf'; 
+    color = colors.pdf; 
+  } else if (isDoc(fileType)) { 
+    name = 'doc'; 
+    color = colors.doc; 
+  } else if (isXls(fileType)) { 
+    name = 'xls'; 
+    color = colors.xls; 
+  }
   return <Icon name={name} size={size} color={color} />;
 };
 
+/* ─── styles ─── */
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap');
 
@@ -109,7 +152,7 @@ const STYLES = `
   .ef-fold-cnt { font-size:10px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 10px; border-radius:20px; font-family:'DM Mono',monospace; }
   .ef-file-thumb { width:100%; height:100px; background:#0f1117; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; overflow:hidden; position:relative; }
   .ef-file-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-  .ef-type-tag { font-size:9px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 8px; border-radius:20px; font-family:'DM Mono',monospace; }
+  .ef-type-tag { font-size:9px; color:#6eb5c8; background:rgba(110,181,200,0.1); padding:2px 8px; border-radius:20px; font-family:'DM Mono',monospace; font-weight:500; }
   .ef-card-body { padding:9px 10px; border-top:1px solid rgba(255,255,255,0.05); }
   .ef-card-name { font-size:11px; font-weight:600; color:#dedad2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
   .ef-card-meta { display:flex; justify-content:space-between; font-size:10px; color:#454555; font-family:'DM Mono',monospace; margin-bottom:8px; }
@@ -165,6 +208,12 @@ const STYLES = `
   .ef-pv-dl-btn:hover { background:#82c8db; transform:translateY(-1px); }
   .ef-pv-open-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; background:rgba(110,181,200,0.1); border:1px solid rgba(110,181,200,0.2); color:#6eb5c8; font-size:12px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; }
   .ef-pv-open-btn:hover { background:rgba(110,181,200,0.18); transform:translateY(-1px); }
+  .ef-pv-nav { transition: all 0.2s ease; }
+  .ef-pv-nav:hover { transform: translateY(-50%) scale(1.1); }
+  .ef-pv-thumbnails::-webkit-scrollbar { height: 4px; }
+  .ef-pv-thumbnails::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+  .ef-pv-thumbnails::-webkit-scrollbar-thumb { background: rgba(110,181,200,0.3); border-radius: 4px; }
+  .ef-pv-thumbnails::-webkit-scrollbar-thumb:hover { background: rgba(110,181,200,0.5); }
 `;
 
 function Dialog({ title, defaultValue = '', placeholder = '', onConfirm, onCancel }) {
@@ -189,11 +238,13 @@ function Dialog({ title, defaultValue = '', placeholder = '', onConfirm, onCance
   );
 }
 
-function Preview({ file, onClose }) {
+function Preview({ file, onClose, allFiles = [] }) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [pdfError, setPdfError] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef(null);
 
   const label = fileTypeLabel(file.file_type);
@@ -202,9 +253,42 @@ function Preview({ file, onClose }) {
   const doc = isDoc(file.file_type);
   const xls = isXls(file.file_type);
 
-  const dlUrl = file.cloudinary_url
-    ? file.cloudinary_url.replace('/upload/', '/upload/fl_attachment/')
-    : file.cloudinary_url;
+  const fileUrl = file.cloudinary_url;
+  const pdfUrl = pdf ? `${fileUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH&zoom=page-fit` : fileUrl;
+  const officeViewerUrl = (doc || xls) ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}` : null;
+  const googleDocsUrl = (doc || xls) ? `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true` : null;
+  const dlUrl = file.cloudinary_url ? file.cloudinary_url.replace('/upload/', '/upload/fl_attachment/') : file.cloudinary_url;
+
+  // Get all images from allFiles
+  const imageFiles = allFiles.filter(f => isImg(f.file_type, f.cloudinary_url));
+  
+  useEffect(() => {
+    const index = imageFiles.findIndex(f => f.id === file.id);
+    setCurrentIndex(index >= 0 ? index : 0);
+  }, [file, imageFiles]);
+
+  const handlePrevImage = () => {
+    if (currentIndex > 0) {
+      const prevFile = imageFiles[currentIndex - 1];
+      if (prevFile) {
+        // We need to update the preview - this will be handled by parent
+        window.dispatchEvent(new CustomEvent('preview-change', { detail: prevFile }));
+        setZoom(1);
+        setPosition({ x: 0, y: 0 });
+      }
+    }
+  };
+
+  const handleNextImage = () => {
+    if (currentIndex < imageFiles.length - 1) {
+      const nextFile = imageFiles[currentIndex + 1];
+      if (nextFile) {
+        window.dispatchEvent(new CustomEvent('preview-change', { detail: nextFile }));
+        setZoom(1);
+        setPosition({ x: 0, y: 0 });
+      }
+    }
+  };
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
@@ -242,12 +326,13 @@ function Preview({ file, onClose }) {
     }
   }, [img]);
 
-  const getOfficeViewerUrl = () => {
-    if (doc || xls) {
-      return `https://docs.google.com/gview?url=${encodeURIComponent(file.cloudinary_url)}&embedded=true`;
-    }
-    return null;
+  const handlePdfError = () => {
+    console.error('PDF failed to load:', fileUrl);
+    setPdfError(true);
   };
+
+  const hasPrevImage = currentIndex > 0;
+  const hasNextImage = currentIndex < imageFiles.length - 1;
 
   return (
     <div className="ef-pv-bg" onClick={onClose}>
@@ -258,7 +343,14 @@ function Preview({ file, onClose }) {
           </div>
           <div className="ef-pv-info">
             <div className="ef-pv-name" title={file.file_name}>{file.file_name}</div>
-            <div className="ef-pv-meta">{label} · {fmtSize(file.file_size)} · {fmtDate(file.uploaded_at)}</div>
+            <div className="ef-pv-meta">
+              {label} · {fmtSize(file.file_size)} · {fmtDate(file.uploaded_at)}
+              {imageFiles.length > 1 && (
+                <span style={{ marginLeft: '12px', color: '#6eb5c8' }}>
+                  {currentIndex + 1} / {imageFiles.length}
+                </span>
+              )}
+            </div>
           </div>
           {img && (
             <div className="ef-pv-zoom-controls">
@@ -269,8 +361,8 @@ function Preview({ file, onClose }) {
             </div>
           )}
           <div className="ef-pv-acts">
-            <a className="ef-pv-open-btn" href={file.cloudinary_url} target="_blank" rel="noopener noreferrer">
-              <Icon name="external" size={13} /> Open
+            <a className="ef-pv-open-btn" href={fileUrl} target="_blank" rel="noopener noreferrer">
+              <Icon name="external" size={13} /> Open in New Tab
             </a>
             <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}>
               <Icon name="download" size={13} /> Download
@@ -287,33 +379,168 @@ function Preview({ file, onClose }) {
           onMouseUp={handleMouseUp}
           style={{ cursor: zoom > 1 && img ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
         >
+          {img && hasPrevImage && (
+            <button 
+              className="ef-pv-nav prev"
+              onClick={handlePrevImage}
+              style={{
+                position: 'absolute',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                background: 'rgba(0,0,0,0.6)',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(4px)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(110,181,200,0.9)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+            >
+              <Icon name="chevronL" size={28} style={{ transform: 'rotate(180deg)' }} />
+            </button>
+          )}
+          
+          {img && hasNextImage && (
+            <button 
+              className="ef-pv-nav next"
+              onClick={handleNextImage}
+              style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                background: 'rgba(0,0,0,0.6)',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(4px)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(110,181,200,0.9)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+            >
+              <Icon name="chevronR" size={28} />
+            </button>
+          )}
+
           {img ? (
             <img
-              src={file.cloudinary_url}
+              src={fileUrl}
               alt={file.file_name}
               style={{
                 transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
                 transition: isDragging ? 'none' : 'transform 0.2s ease'
               }}
               draggable={false}
+              onError={() => console.error('Image failed to load')}
             />
           ) : pdf ? (
-            <iframe src={`${file.cloudinary_url}#toolbar=1&navpanes=1&scrollbar=1&view=FitH`} title={file.file_name} />
+            !pdfError ? (
+              <iframe
+                src={pdfUrl}
+                title={file.file_name}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                onError={handlePdfError}
+              />
+            ) : (
+              <div className="ef-pv-nopreview">
+                <div className="ef-pv-nopreview-icon"><FileTypeIcon fileType={file.file_type} size={40} /></div>
+                <h3>{file.file_name}</h3>
+                <p>PDF cannot be previewed. Click "Open in New Tab" to view.</p>
+                <a className="ef-pv-dl-btn" href={fileUrl} target="_blank" rel="noopener noreferrer">
+                  <Icon name="external" size={14} /> Open PDF
+                </a>
+              </div>
+            )
           ) : (doc || xls) ? (
-            <iframe src={getOfficeViewerUrl()} title={file.file_name} style={{ width: '100%', height: '100%', border: 'none' }} />
+            <>
+              <iframe
+                src={officeViewerUrl || googleDocsUrl}
+                title={file.file_name}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                onError={(e) => {
+                  console.error('Office viewer failed');
+                  e.target.style.display = 'none';
+                }}
+              />
+              <div className="ef-pv-nopreview" style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.7 }}>
+                <div className="ef-pv-nopreview-icon"><FileTypeIcon fileType={file.file_type} size={40} /></div>
+                <p>Loading document preview...</p>
+              </div>
+            </>
           ) : (
             <div className="ef-pv-nopreview">
               <div className="ef-pv-nopreview-icon"><FileTypeIcon fileType={file.file_type} size={40} /></div>
               <h3>{file.file_name}</h3>
               <p>Preview not available for {label} files</p>
-              <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}><Icon name="download" size={14} /> Download to view</a>
+              <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}>
+                <Icon name="download" size={14} /> Download to view
+              </a>
             </div>
           )}
         </div>
 
+        {img && imageFiles.length > 1 && (
+          <div className="ef-pv-thumbnails" style={{
+            display: 'flex',
+            gap: '8px',
+            padding: '12px 16px',
+            background: '#0f1117',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            overflowX: 'auto',
+            flexShrink: 0
+          }}>
+            {imageFiles.map((imgFile, idx) => (
+              <div
+                key={imgFile.id}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('preview-change', { detail: imgFile }));
+                  setZoom(1);
+                  setPosition({ x: 0, y: 0 });
+                }}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  border: file.id === imgFile.id ? '2px solid #6eb5c8' : '1px solid rgba(255,255,255,0.1)',
+                  opacity: file.id === imgFile.id ? 1 : 0.6,
+                  transition: 'all 0.2s',
+                  flexShrink: 0
+                }}
+              >
+                <img
+                  src={imgFile.cloudinary_url}
+                  alt={imgFile.file_name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="ef-pv-bot">
-          <span className="ef-pv-path">{file.cloudinary_url}</span>
-          <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}><Icon name="download" size={13} /> Download</a>
+          <span className="ef-pv-path">{fileUrl}</span>
+          <a className="ef-pv-dl-btn" href={dlUrl} download={file.file_name}>
+            <Icon name="download" size={13} /> Download
+          </a>
         </div>
       </div>
     </div>
@@ -332,10 +559,19 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [selIds, setSelIds] = useState(new Set());
   const [dialog, setDialog] = useState(null);
   const [moveMenu, setMoveMenu] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const fileRef = useRef();
+
+  // Listen for preview changes from gallery
+  useEffect(() => {
+    const handlePreviewChange = (e) => {
+      setPreviewFile(e.detail);
+    };
+    window.addEventListener('preview-change', handlePreviewChange);
+    return () => window.removeEventListener('preview-change', handlePreviewChange);
+  }, []);
 
   // Fetch files from backend
   const fetchFiles = useCallback(async () => {
@@ -350,11 +586,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       setFiles(r.data);
     } catch (err) {
       console.error('Fetch error:', err);
-      if (err.response?.status === 500) {
-        onNotify('error', 'Database error - please refresh');
-      } else {
-        onNotify('error', 'Failed to load files');
-      }
+      onNotify('error', 'Failed to load files');
     } finally {
       setLoading(false);
     }
@@ -398,12 +630,12 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setMoveMenu(null);
   };
 
-  // Get visible folders (only direct children of current folder)
+  // Get visible folders
   const visFolders = current === null
     ? folders.filter(f => !f.parent_folder_id)
     : folders.filter(f => f.parent_folder_id === current);
 
-  // Upload files with progress
+  // Upload files
   const handleUpload = async () => {
     if (!pending.length) return;
     setUploading(true);
@@ -440,8 +672,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       }
     } catch (err) {
       console.error('Upload error:', err);
-      const errorMsg = err.response?.data?.error || err.message || 'Upload failed';
-      onNotify('error', errorMsg);
+      onNotify('error', 'Upload failed');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -527,7 +758,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
   };
 
-  // Move file to folder
+  // Move file
   const moveFile = async (fileId, targetId) => {
     setMoveMenu(null);
     try {
@@ -561,7 +792,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     });
   };
 
-  // Batch delete with progress
+  // Batch delete
   const batchDelete = async () => {
     if (!selIds.size) return;
     
@@ -578,8 +809,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     
     let deletedFiles = 0;
     let deletedFolders = 0;
-    let failedFiles = 0;
-    let failedFolders = 0;
     
     for (const u of fUids) {
       try {
@@ -587,7 +816,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         deletedFiles++;
       } catch (err) {
         console.error('Delete file error:', err);
-        failedFiles++;
       }
     }
     
@@ -597,7 +825,6 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         deletedFolders++;
       } catch (err) {
         console.error('Delete folder error:', err);
-        failedFolders++;
       }
     }
     
@@ -605,12 +832,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     await fetchFolders();
     setSelIds(new Set());
     setDeleteLoading(false);
-    
-    if (failedFiles === 0 && failedFolders === 0) {
-      onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
-    } else {
-      onNotify('warning', `Deleted ${deletedFiles}/${fileCount} files, ${deletedFolders}/${folderCount} folders. Failed: ${failedFiles + failedFolders}`);
-    }
+    onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
   };
 
   const total = visFolders.length + files.length;
@@ -742,19 +964,20 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                 <div
                   key={file.id}
                   className={`ef-card${selIds.has(fileId) ? ' sel' : ''}`}
-                  onClick={() => { setMoveMenu(null); setPreview(file); }}
+                  onClick={() => { setMoveMenu(null); setPreviewFile(file); }}
                   draggable
                   onDragStart={e => onDragStart(e, file.id)}
                 >
                   {selIds.has(fileId) && <div className="ef-chk"><Icon name="check" size={11} color="#0b0d12" /></div>}
                   <div className="ef-file-thumb">
-                    {isImg(file.file_type, file.cloudinary_url)
-                      ? <img src={file.cloudinary_url} alt={file.file_name} onError={e => { e.target.style.display = 'none'; }} />
-                      : <>
-                          <FileTypeIcon fileType={file.file_type} size={30} />
-                          <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
-                        </>
-                    }
+                    {isImg(file.file_type, file.cloudinary_url) ? (
+                      <img src={file.cloudinary_url} alt={file.file_name} onError={e => { e.target.style.display = 'none'; }} />
+                    ) : (
+                      <>
+                        <FileTypeIcon fileType={file.file_type} size={30} />
+                        <div className="ef-type-tag">{fileTypeLabel(file.file_type)}</div>
+                      </>
+                    )}
                   </div>
                   <div className="ef-card-body">
                     <div className="ef-card-name" title={file.file_name}>{file.file_name}</div>
@@ -763,7 +986,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                       <span>{fmtDate(file.uploaded_at)}</span>
                     </div>
                     <div className="ef-card-acts">
-                      <button className="ef-act" title="Preview" onClick={e => { e.stopPropagation(); setPreview(file); }}>
+                      <button className="ef-act" title="Preview" onClick={e => { e.stopPropagation(); setPreviewFile(file); }}>
                         <Icon name="eye" size={13} />
                       </button>
                       <button className="ef-act" title="Rename" onClick={e => { e.stopPropagation(); setDialog({ type: 'renameFile', item: file }); }}>
@@ -807,7 +1030,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       {dialog?.type === 'newFolder' && <Dialog title="New Folder" placeholder="Folder name…" onConfirm={createFolder} onCancel={() => setDialog(null)} />}
       {dialog?.type === 'renameFolder' && <Dialog title="Rename Folder" defaultValue={dialog.item.folder_name} onConfirm={renameFolder} onCancel={() => setDialog(null)} />}
       {dialog?.type === 'renameFile' && <Dialog title="Rename File" defaultValue={dialog.item.file_name} onConfirm={renameFile} onCancel={() => setDialog(null)} />}
-      {preview && <Preview file={preview} onClose={() => setPreview(null)} />}
+      {previewFile && <Preview file={previewFile} onClose={() => setPreviewFile(null)} allFiles={files} />}
     </>
   );
 }
