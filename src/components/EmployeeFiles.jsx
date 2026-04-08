@@ -271,7 +271,6 @@ function Preview({ file, onClose, allFiles = [] }) {
     if (currentIndex > 0) {
       const prevFile = imageFiles[currentIndex - 1];
       if (prevFile) {
-        // We need to update the preview - this will be handled by parent
         window.dispatchEvent(new CustomEvent('preview-change', { detail: prevFile }));
         setZoom(1);
         setPosition({ x: 0, y: 0 });
@@ -405,7 +404,7 @@ function Preview({ file, onClose, allFiles = [] }) {
               onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(110,181,200,0.9)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
             >
-              <Icon name="chevronL" size={28} style={{ transform: 'rotate(180deg)' }} />
+              <Icon name="chevronL" size={28} />
             </button>
           )}
           
@@ -562,6 +561,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [previewFile, setPreviewFile] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isAllSelected, setIsAllSelected] = useState(false);
   const fileRef = useRef();
 
   // Listen for preview changes from gallery
@@ -615,6 +615,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setBc(p => [...p, { id: f.id, name: f.folder_name }]);
     setSelIds(new Set());
     setMoveMenu(null);
+    setIsAllSelected(false);
   };
 
   const navTo = (i) => {
@@ -628,22 +629,74 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
     setSelIds(new Set());
     setMoveMenu(null);
+    setIsAllSelected(false);
   };
 
-  // Get visible folders
+  // Get visible folders - MOVED HERE before the useEffect that uses it
   const visFolders = current === null
     ? folders.filter(f => !f.parent_folder_id)
     : folders.filter(f => f.parent_folder_id === current);
 
-  // Upload files
+  // Check if all visible items are selected - MOVED AFTER visFolders is defined
+  useEffect(() => {
+    const visibleIds = [
+      ...visFolders.map(f => `folder-${f.id}`),
+      ...files.map(f => `file-${f.id}`)
+    ];
+    if (visibleIds.length > 0 && visibleIds.every(id => selIds.has(id))) {
+      setIsAllSelected(true);
+    } else {
+      setIsAllSelected(false);
+    }
+  }, [selIds, visFolders, files]);
+
+  // Handle Select All
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelIds(new Set());
+      setIsAllSelected(false);
+    } else {
+      const allIds = new Set();
+      visFolders.forEach(f => allIds.add(`folder-${f.id}`));
+      files.forEach(f => allIds.add(`file-${f.id}`));
+      setSelIds(allIds);
+      setIsAllSelected(true);
+    }
+  };
+
+  // Upload files with duplicate prevention
   const handleUpload = async () => {
     if (!pending.length) return;
+    
+    // Check for duplicate files
+    const existingFileNames = new Set(files.map(f => f.file_name.toLowerCase()));
+    const newFiles = [];
+    const duplicateFiles = [];
+    
+    for (const file of pending) {
+      if (existingFileNames.has(file.name.toLowerCase())) {
+        duplicateFiles.push(file.name);
+      } else {
+        newFiles.push(file);
+      }
+    }
+    
+    if (duplicateFiles.length > 0) {
+      onNotify('warning', `Duplicate files skipped: ${duplicateFiles.join(', ')}`);
+    }
+    
+    if (newFiles.length === 0) {
+      setPending([]);
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+    
     setUploading(true);
     setUploadProgress(0);
-    onNotify('info', `Uploading ${pending.length} file(s)...`);
+    onNotify('info', `Uploading ${newFiles.length} file(s)...`);
     
     const fd = new FormData();
-    pending.forEach(f => fd.append('files', f));
+    newFiles.forEach(f => fd.append('files', f));
     
     try {
       const response = await axios.post(`/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`, fd, {
@@ -662,7 +715,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         if (response.data.partial) {
           onNotify('warning', `Uploaded ${response.data.success?.length || 0} files, ${response.data.failed?.length || 0} failed`);
         } else {
-          onNotify('success', `Uploaded ${pending.length} file(s) successfully!`);
+          onNotify('success', `Uploaded ${newFiles.length} file(s) successfully!`);
         }
         
         setPending([]);
@@ -831,6 +884,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     await fetchFiles();
     await fetchFolders();
     setSelIds(new Set());
+    setIsAllSelected(false);
     setDeleteLoading(false);
     onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
   };
@@ -894,6 +948,16 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
                 </button>
               )}
             </>
+          )}
+          {total > 0 && (
+            <button 
+              className="ef-btn ef-btn-ghost" 
+              onClick={handleSelectAll}
+              style={{ marginLeft: 'auto' }}
+            >
+              <Icon name="check" size={13} />
+              {isAllSelected ? 'Deselect All' : 'Select All'}
+            </button>
           )}
           {selIds.size > 0 && (
             <>
