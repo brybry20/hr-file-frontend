@@ -86,6 +86,7 @@ const Icon = ({ name, size = 16, color = 'currentColor' }) => {
     'zoom-in': (<><circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth="1.5"/><path d="M12 8v8M8 12h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
     'zoom-out': (<><circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth="1.5"/><path d="M8 12h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
     refresh: (<><path d="M20 12a8 8 0 11-8-8 8 8 0 018 8z" fill="none" stroke={color} strokeWidth="1.5"/><path d="M12 8v4l3 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
+    print: (<><path d="M6 18V15H18V18H6Z" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/><path d="M6 9V4H18V9" fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/><rect x="4" y="9" width="16" height="9" rx="2" fill="none" stroke={color} strokeWidth="1.5"/><path d="M8 13h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></>),
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
@@ -245,6 +246,7 @@ function Preview({ file, onClose, allFiles = [] }) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [pdfError, setPdfError] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPrinting, setIsPrinting] = useState(false);
   const containerRef = useRef(null);
 
   const label = fileTypeLabel(file.file_type);
@@ -266,6 +268,122 @@ function Preview({ file, onClose, allFiles = [] }) {
     const index = imageFiles.findIndex(f => f.id === file.id);
     setCurrentIndex(index >= 0 ? index : 0);
   }, [file, imageFiles]);
+
+  // Print function for images
+  const printImage = () => {
+    setIsPrinting(true);
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${file.file_name}</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 20px;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              background: white;
+            }
+            img {
+              max-width: 100%;
+              max-height: 100vh;
+              object-fit: contain;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100%;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${fileUrl}" alt="${file.file_name}" />
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.onafterprint = () => {
+      printWindow.close();
+      setIsPrinting(false);
+    };
+  };
+
+  // Print function for PDF
+  const printPdf = () => {
+    setIsPrinting(true);
+    // Open PDF in new window and print
+    const printWindow = window.open(fileUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.onafterprint = () => {
+            setIsPrinting(false);
+          };
+        }, 1000);
+      };
+    } else {
+      // Fallback: create an iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      iframe.src = fileUrl;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.print();
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            setIsPrinting(false);
+          }, 1000);
+        }, 1000);
+      };
+    }
+  };
+
+  // Print function for Office documents
+  const printOffice = () => {
+    setIsPrinting(true);
+    // Open in new tab and print using Google Docs viewer
+    const printWindow = window.open(googleDocsUrl || officeViewerUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.onafterprint = () => {
+            setIsPrinting(false);
+          };
+        }, 2000);
+      };
+    } else {
+      setIsPrinting(false);
+      alert('Please open the document in a new tab to print.');
+    }
+  };
+
+  const handlePrint = () => {
+    if (img) {
+      printImage();
+    } else if (pdf) {
+      printPdf();
+    } else if (doc || xls) {
+      printOffice();
+    } else {
+      alert('Printing not supported for this file type');
+    }
+  };
 
   const handlePrevImage = () => {
     if (currentIndex > 0) {
@@ -360,6 +478,15 @@ function Preview({ file, onClose, allFiles = [] }) {
             </div>
           )}
           <div className="ef-pv-acts">
+            <button 
+              className="ef-pv-zoom-btn" 
+              onClick={handlePrint}
+              disabled={isPrinting}
+              title="Print this document"
+              style={{ background: 'rgba(110,181,200,0.15)', borderColor: 'rgba(110,181,200,0.3)' }}
+            >
+              <Icon name="print" size={16} />
+            </button>
             <a className="ef-pv-open-btn" href={fileUrl} target="_blank" rel="noopener noreferrer">
               <Icon name="external" size={13} /> Open in New Tab
             </a>
@@ -632,12 +759,12 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setIsAllSelected(false);
   };
 
-  // Get visible folders - MOVED HERE before the useEffect that uses it
+  // Get visible folders
   const visFolders = current === null
     ? folders.filter(f => !f.parent_folder_id)
     : folders.filter(f => f.parent_folder_id === current);
 
-  // Check if all visible items are selected - MOVED AFTER visFolders is defined
+  // Check if all visible items are selected
   useEffect(() => {
     const visibleIds = [
       ...visFolders.map(f => `folder-${f.id}`),
