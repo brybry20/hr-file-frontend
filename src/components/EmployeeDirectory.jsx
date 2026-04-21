@@ -1053,95 +1053,25 @@ export default function EmployeeDirectory({ onNotify }) {
           )}
 
           {/* Resign Modal */}
-          {showResignModal && selectedEmployee && (
-            <div className="ed-overlay" onClick={() => setShowResignModal(false)}>
-              <div className="ed-resign-modal" onClick={e => e.stopPropagation()}>
-                <div className="ed-resign-head">
-                  <div className="ed-resign-title">📋 Process Resignation</div>
-                  <button className="ed-card-close" onClick={() => setShowResignModal(false)}>×</button>
-                </div>
-
-                <div className="ed-resign-body">
-                  <div className="ed-resign-who">
-                    <div className="ed-resign-who-avatar">{getInitials(selectedEmployee.name)}</div>
-                    <div>
-                      <div className="ed-resign-who-name">{safeDisplay(selectedEmployee.name)}</div>
-                      <div className="ed-resign-who-pos">{safeDisplay(selectedEmployee.position)}</div>
-                    </div>
-                  </div>
-
-                  <div style={{marginBottom:20}}>
-                    <label className="ed-field-label">Resignation Date</label>
-                    <input
-                      className="ed-field-input"
-                      type="date"
-                      value={resignData.resignation_date}
-                      onChange={e => setResignData(p => ({ ...p, resignation_date: e.target.value }))}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="ed-field-label">
-                      Reason <span style={{color:'#5a5a6a', fontSize:11, fontWeight:'normal'}}>Optional</span>
-                    </label>
-                    <input
-                      className="ed-field-input"
-                      type="text"
-                      placeholder="Reason for resignation"
-                      value={resignData.reason}
-                      onChange={e => setResignData(p => ({ ...p, reason: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="ed-resign-foot">
-                  <button className="ed-foot-cancel" onClick={() => setShowResignModal(false)}>Cancel</button>
-                  <button className="ed-resign-confirm" onClick={handleResign} disabled={saving}>
-                    {saving ? 'Processing…' : 'Confirm Resignation'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Delete Confirmation Modal */}
-          {deleteTarget && (
-            <div className="ed-overlay" onClick={() => setDeleteTarget(null)}>
-              <div className="ed-confirm-modal" onClick={e => e.stopPropagation()}>
-                <div className="ed-confirm-icon">🗑️</div>
-                <div className="ed-confirm-title">Delete Employee?</div>
-                <div className="ed-confirm-sub">
-                  You're about to permanently delete <strong style={{color:'#e8e4dc'}}>{safeDisplay(deleteTarget.name)}</strong>.<br/>
-                  This action cannot be undone.
-                </div>
-                <div className="ed-confirm-btns">
-                  <button className="ed-confirm-no" onClick={() => setDeleteTarget(null)}>Cancel</button>
-                  <button className="ed-confirm-del" onClick={confirmDelete}>Yes, Delete</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* FIX: Documents modal moved INSIDE the portal — same level as all other modals */}
-          {showFilesModal && selectedEmployeeForFiles && (
-            <div className="ed-overlay" onClick={() => setShowFilesModal(false)}>
-              <div className="ed-form-modal" style={{ maxWidth: '700px' }} onClick={e => e.stopPropagation()}>
-                <div className="ed-form-head">
-                  <div className="ed-form-title">
-                    📎 {selectedEmployeeForFiles.name} — Documents
-                  </div>
-                  <button className="ed-card-close" onClick={() => setShowFilesModal(false)}>×</button>
-                </div>
-                <div style={{ padding: '20px' }}>
-                  <EmployeeFiles
-                    employeeId={selectedEmployeeForFiles.id}
-                    employeeName={selectedEmployeeForFiles.name}
-                    onNotify={notify}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+{showFilesModal && selectedEmployeeForFiles && (
+  <div className="ed-overlay" onClick={() => setShowFilesModal(false)}>
+    <div className="ed-form-modal" style={{ maxWidth: '700px' }} onClick={e => e.stopPropagation()}>
+      <div className="ed-form-head">
+        <div className="ed-form-title">
+          📎 {selectedEmployeeForFiles.name} — Documents
+        </div>
+        <button className="ed-card-close" onClick={() => setShowFilesModal(false)}>×</button>
+      </div>
+      <div style={{ padding: '20px' }}>
+        <EmployeeFiles
+          employeeId={selectedEmployeeForFiles._id}  // ← PALITAN: id -> _id
+          employeeName={selectedEmployeeForFiles.name}
+          onNotify={notify}
+        />
+      </div>
+    </div>
+  </div>
+)}
         </>,
         document.body
       )}

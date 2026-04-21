@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import axios from '../axios-config'; // or kung saan mo nilagay ang axios-config.js
 
 axios.defaults.withCredentials = true;
 
@@ -691,6 +691,27 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
   const [isAllSelected, setIsAllSelected] = useState(false);
   const fileRef = useRef();
 
+  // ✅ ADD THIS GUARD - para hindi mag-error kung walang employeeId
+  if (!employeeId) {
+    return (
+      <div className="ef">
+        <div className="ef-empty">
+          <div className="ef-empty-icon"><Icon name="folder" size={52} color="#1e2133" /></div>
+          <div className="ef-empty-text">No employee selected</div>
+          <div className="ef-empty-sub">Please select an employee to view their files</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Set axios base URL kung wala pa
+  useEffect(() => {
+    if (!axios.defaults.baseURL) {
+      axios.defaults.baseURL = 'http://localhost:3001';
+    }
+    axios.defaults.withCredentials = true;
+  }, []);
+
   // Listen for preview changes from gallery
   useEffect(() => {
     const handlePreviewChange = (e) => {
@@ -713,7 +734,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       setFiles(r.data);
     } catch (err) {
       console.error('Fetch error:', err);
-      onNotify('error', 'Failed to load files');
+      if (onNotify) onNotify('error', 'Failed to load files');
     } finally {
       setLoading(false);
     }
@@ -791,9 +812,13 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
   };
 
-  // Upload files with duplicate prevention
+  // ✅ FIXED: Upload files with proper error handling
   const handleUpload = async () => {
     if (!pending.length) return;
+    if (!employeeId) {
+      if (onNotify) onNotify('error', 'No employee selected');
+      return;
+    }
     
     // Check for duplicate files
     const existingFileNames = new Set(files.map(f => f.file_name.toLowerCase()));
@@ -809,7 +834,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
     
     if (duplicateFiles.length > 0) {
-      onNotify('warning', `Duplicate files skipped: ${duplicateFiles.join(', ')}`);
+      if (onNotify) onNotify('warning', `Duplicate files skipped: ${duplicateFiles.join(', ')}`);
     }
     
     if (newFiles.length === 0) {
@@ -820,13 +845,16 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     
     setUploading(true);
     setUploadProgress(0);
-    onNotify('info', `Uploading ${newFiles.length} file(s)...`);
+    if (onNotify) onNotify('info', `Uploading ${newFiles.length} file(s)...`);
     
     const fd = new FormData();
     newFiles.forEach(f => fd.append('files', f));
     
     try {
-      const response = await axios.post(`/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`, fd, {
+      const url = `/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`;
+      console.log('Uploading to:', url); // Debug log
+      
+      const response = await axios.post(url, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
         onUploadProgress: (progressEvent) => {
@@ -840,19 +868,19 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         await fetchFolders();
         
         if (response.data.partial) {
-          onNotify('warning', `Uploaded ${response.data.success?.length || 0} files, ${response.data.failed?.length || 0} failed`);
+          if (onNotify) onNotify('warning', `Uploaded ${response.data.success?.length || 0} files, ${response.data.failed?.length || 0} failed`);
         } else {
-          onNotify('success', `Uploaded ${newFiles.length} file(s) successfully!`);
+          if (onNotify) onNotify('success', `Uploaded ${newFiles.length} file(s) successfully!`);
         }
         
         setPending([]);
         if (fileRef.current) fileRef.current.value = '';
       } else {
-        onNotify('error', response.data.error || 'Upload failed');
+        if (onNotify) onNotify('error', response.data.error || 'Upload failed');
       }
     } catch (err) {
       console.error('Upload error:', err);
-      onNotify('error', 'Upload failed');
+      if (onNotify) onNotify('error', err.response?.data?.error || 'Upload failed - check console');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -868,10 +896,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         parentFolderId: current || null
       }, { withCredentials: true });
       await fetchFolders();
-      onNotify('success', `Folder "${name}" created`);
+      if (onNotify) onNotify('success', `Folder "${name}" created`);
     } catch (err) {
       console.error('Create folder error:', err);
-      onNotify('error', 'Failed to create folder');
+      if (onNotify) onNotify('error', 'Failed to create folder');
     }
   };
 
@@ -885,10 +913,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       if (current === f.id) {
         setBc(prev => prev.map((c, i) => i === prev.length - 1 ? { ...c, name } : c));
       }
-      onNotify('success', 'Folder renamed');
+      if (onNotify) onNotify('success', 'Folder renamed');
     } catch (err) {
       console.error('Rename folder error:', err);
-      onNotify('error', 'Failed to rename folder');
+      if (onNotify) onNotify('error', 'Failed to rename folder');
     }
   };
 
@@ -903,10 +931,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
         setCurrent(f.parent_folder_id);
         setBc(prev => prev.slice(0, -1));
       }
-      onNotify('success', 'Folder deleted');
+      if (onNotify) onNotify('success', 'Folder deleted');
     } catch (err) {
       console.error('Delete folder error:', err);
-      onNotify('error', 'Failed to delete folder');
+      if (onNotify) onNotify('error', 'Failed to delete folder');
     }
   };
 
@@ -917,10 +945,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.put(`/api/files/${f.id}/rename`, { newName: name }, { withCredentials: true });
       await fetchFiles();
-      onNotify('success', 'File renamed');
+      if (onNotify) onNotify('success', 'File renamed');
     } catch (err) {
       console.error('Rename file error:', err);
-      onNotify('error', 'Failed to rename file');
+      if (onNotify) onNotify('error', 'Failed to rename file');
     }
   };
 
@@ -931,10 +959,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       await axios.delete(`/api/files/${f.id}`, { withCredentials: true });
       await fetchFiles();
       await fetchFolders();
-      onNotify('success', 'File deleted');
+      if (onNotify) onNotify('success', 'File deleted');
     } catch (err) {
       console.error('Delete file error:', err);
-      onNotify('error', 'Failed to delete file');
+      if (onNotify) onNotify('error', 'Failed to delete file');
     }
   };
 
@@ -944,10 +972,10 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     try {
       await axios.put(`/api/files/${fileId}/move`, { folderId: targetId || null }, { withCredentials: true });
       await fetchFiles();
-      onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
+      if (onNotify) onNotify('success', targetId ? 'Moved to folder' : 'Moved to root');
     } catch (err) {
       console.error('Move file error:', err);
-      onNotify('error', 'Failed to move file');
+      if (onNotify) onNotify('error', 'Failed to move file');
     }
   };
 
@@ -982,7 +1010,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     if (!window.confirm(`Delete ${fileCount} file(s) and ${folderCount} folder(s)?`)) return;
     
     setDeleteLoading(true);
-    onNotify('info', `Deleting ${selIds.size} item(s)...`);
+    if (onNotify) onNotify('info', `Deleting ${selIds.size} item(s)...`);
     
     const fUids = [...selIds].filter(u => u.startsWith('file-'));
     const foUids = [...selIds].filter(u => u.startsWith('folder-'));
@@ -1013,7 +1041,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setSelIds(new Set());
     setIsAllSelected(false);
     setDeleteLoading(false);
-    onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
+    if (onNotify) onNotify('success', `Deleted ${deletedFiles} file(s) and ${deletedFolders} folder(s)`);
   };
 
   const total = visFolders.length + files.length;
