@@ -937,13 +937,13 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
       if (onNotify) onNotify('error', 'Failed to delete folder');
     }
   };
-
-  // Rename file
-  const renameFile = async (name) => {
+// Rename file
+const renameFile = async (name) => {
     const f = dialog?.item;
     setDialog(null);
     try {
-      await axios.put(`/api/files/${f.id}/rename`, { newName: name }, { withCredentials: true });
+      // PALITAN: f.id -> f._id
+      await axios.put(`/api/files/${f._id}/rename`, { newName: name }, { withCredentials: true });
       await fetchFiles();
       if (onNotify) onNotify('success', 'File renamed');
     } catch (err) {
@@ -952,11 +952,11 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     }
   };
 
-  // Delete file
-  const deleteFile = async (f) => {
+const deleteFile = async (f) => {
     if (!window.confirm(`Delete "${f.file_name}"?`)) return;
     try {
-      await axios.delete(`/api/files/${f.id}`, { withCredentials: true });
+      // PALITAN: f.id -> f._id
+      await axios.delete(`/api/files/${f._id}`, { withCredentials: true });
       await fetchFiles();
       await fetchFolders();
       if (onNotify) onNotify('success', 'File deleted');

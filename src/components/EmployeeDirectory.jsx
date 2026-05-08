@@ -1064,7 +1064,7 @@ export default function EmployeeDirectory({ onNotify }) {
       </div>
       <div style={{ padding: '20px' }}>
         <EmployeeFiles
-          employeeId={selectedEmployeeForFiles._id}  // ← PALITAN: id -> _id
+          employeeId={selectedEmployeeForFiles.id || selectedEmployeeForFiles._id}
           employeeName={selectedEmployeeForFiles.name}
           onNotify={notify}
         />
