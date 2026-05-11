@@ -847,44 +847,53 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     setUploadProgress(0);
     if (onNotify) onNotify('info', `Uploading ${newFiles.length} file(s)...`);
     
-    const fd = new FormData();
-    newFiles.forEach(f => fd.append('files', f));
+        let uploadedCount = 0;
+    let failedCount = 0;
+    const batchSize = 10;
+    const totalFiles = newFiles.length;
+    const url = `/api/employees/${employeeId}/files${current ? \`?folderId=\${current}\` : ''}`;
     
-    try {
-      const url = `/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`;
-      console.log('Uploading to:', url); // Debug log
+    for (let i = 0; i < totalFiles; i += batchSize) {
+      const batch = newFiles.slice(i, i + batchSize);
+      const fd = new FormData();
+      batch.forEach(f => fd.append('files', f));
       
-      const response = await axios.post(url, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true,
-        onUploadProgress: (progressEvent) => {
-          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percent);
-        }
-      });
-      
-      if (response.data.success || response.data.partial) {
-        await fetchFiles();
-        await fetchFolders();
+      try {
+        const response = await axios.post(url, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
+          onUploadProgress: (progressEvent) => {
+            const batchPercent = (progressEvent.loaded / progressEvent.total);
+            const overallPercent = Math.round(((i + (batch.length * batchPercent)) / totalFiles) * 100);
+            setUploadProgress(Math.min(overallPercent, 100));
+          }
+        });
         
-        if (response.data.partial) {
-          if (onNotify) onNotify('warning', `Uploaded ${response.data.success?.length || 0} files, ${response.data.failed?.length || 0} failed`);
+        if (response.data.success || response.data.partial) {
+          uploadedCount += response.data.success?.length || 0;
+          failedCount += response.data.failed?.length || 0;
         } else {
-          if (onNotify) onNotify('success', `Uploaded ${newFiles.length} file(s) successfully!`);
+          failedCount += batch.length;
         }
-        
-        setPending([]);
-        if (fileRef.current) fileRef.current.value = '';
-      } else {
-        if (onNotify) onNotify('error', response.data.error || 'Upload failed');
+      } catch (err) {
+        console.error('Batch upload error:', err);
+        failedCount += batch.length;
       }
-    } catch (err) {
-      console.error('Upload error:', err);
-      if (onNotify) onNotify('error', err.response?.data?.error || 'Upload failed - check console');
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
     }
+    
+    await fetchFiles();
+    await fetchFolders();
+    
+    if (failedCount > 0) {
+      if (onNotify) onNotify('warning', \`Uploaded ${uploadedCount} files, ${failedCount} failed\`);
+    } else if (uploadedCount > 0) {
+      if (onNotify) onNotify('success', \`Uploaded ${uploadedCount} file(s) successfully!\`);
+    }
+    
+    setPending([]);
+    if (fileRef.current) fileRef.current.value = '';
+    setUploading(false);
+    setUploadProgress(0);
   };
 
   // Create folder
