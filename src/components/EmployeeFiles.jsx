@@ -255,11 +255,12 @@ function Preview({ file, onClose, allFiles = [] }) {
   const doc = isDoc(file.file_type);
   const xls = isXls(file.file_type);
 
-  const fileUrl = file.cloudinary_url;
+  const cleanUrl = file.cloudinary_url ? file.cloudinary_url.replace('/upload/fl_attachment/', '/upload/') : file.cloudinary_url;
+  const fileUrl = cleanUrl;
   const pdfUrl = pdf ? `${fileUrl}#toolbar=1&navpanes=1&scrollbar=1&view=FitH&zoom=page-fit` : fileUrl;
   const officeViewerUrl = (doc || xls) ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}` : null;
   const googleDocsUrl = (doc || xls) ? `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true` : null;
-  const dlUrl = file.cloudinary_url ? file.cloudinary_url.replace('/upload/', '/upload/fl_attachment/') : file.cloudinary_url;
+  const dlUrl = cleanUrl ? cleanUrl.replace('/upload/', '/upload/fl_attachment/') : cleanUrl;
 
   // Get all images from allFiles
   const imageFiles = allFiles.filter(f => isImg(f.file_type, f.cloudinary_url));
