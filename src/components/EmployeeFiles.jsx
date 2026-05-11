@@ -851,7 +851,7 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     let failedCount = 0;
     const batchSize = 10;
     const totalFiles = newFiles.length;
-    const url = `/api/employees/${employeeId}/files${current ? \`?folderId=\${current}\` : ''}`;
+    const url = `/api/employees/${employeeId}/files${current ? `?folderId=${current}` : ''}`;
     
     for (let i = 0; i < totalFiles; i += batchSize) {
       const batch = newFiles.slice(i, i + batchSize);
