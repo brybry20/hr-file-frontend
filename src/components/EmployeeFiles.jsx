@@ -885,9 +885,9 @@ export default function EmployeeFiles({ employeeId, employeeName, onNotify }) {
     await fetchFolders();
     
     if (failedCount > 0) {
-      if (onNotify) onNotify('warning', \`Uploaded ${uploadedCount} files, ${failedCount} failed\`);
+      if (onNotify) onNotify('warning', `Uploaded ${uploadedCount} files, ${failedCount} failed`);
     } else if (uploadedCount > 0) {
-      if (onNotify) onNotify('success', \`Uploaded ${uploadedCount} file(s) successfully!\`);
+      if (onNotify) onNotify('success', `Uploaded ${uploadedCount} file(s) successfully!`);
     }
     
     setPending([]);
